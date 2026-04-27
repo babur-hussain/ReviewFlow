@@ -15,8 +15,8 @@ const app = express();
 
 app.set("trust proxy", 1);
 app.use(helmet({ crossOriginResourcePolicy: { policy: "cross-origin" } }));
-const origins = [env.frontendUrl, "http://localhost:5173", "http://127.0.0.1:5173"];
-app.use(cors({ origin: env.nodeEnv === "development" ? origins : env.frontendUrl, credentials: true }));
+const origins = [env.frontendUrl];
+app.use(cors({ origin: origins, credentials: true }));
 app.use(express.json({ limit: "750kb" }));
 
 app.get("/health", (req, res) => res.json({ ok: true }));
