@@ -16,15 +16,6 @@ function getFirebaseApp() {
     return admin.app();
   }
 
-  if (env.googleApplicationCredentials && fs.existsSync(env.googleApplicationCredentials)) {
-    const serviceAccount = JSON.parse(fs.readFileSync(env.googleApplicationCredentials, "utf8"));
-    admin.initializeApp({
-      credential: admin.credential.cert(serviceAccount),
-      projectId: serviceAccount.project_id,
-    });
-    return admin.app();
-  }
-
   admin.initializeApp();
   return admin.app();
 }

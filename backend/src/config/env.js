@@ -19,7 +19,6 @@ module.exports = {
   firebaseProjectId: process.env.FIREBASE_PROJECT_ID,
   firebaseClientEmail: process.env.FIREBASE_CLIENT_EMAIL,
   firebasePrivateKey: process.env.FIREBASE_PRIVATE_KEY,
-  googleApplicationCredentials: process.env.GOOGLE_APPLICATION_CREDENTIALS,
   openRouterApiKey: process.env.OPENROUTER_API_KEY,
   openRouterModel: process.env.OPENROUTER_MODEL || "anthropic/claude-sonnet-4-5",
   publicBaseUrl: process.env.PUBLIC_BASE_URL || process.env.FRONTEND_URL || "http://localhost:5173",
