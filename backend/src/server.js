@@ -16,8 +16,25 @@ const app = express();
 app.set("trust proxy", 1);
 
 // Configure CORS first to ensure headers are always present
-const origins = [env.frontendUrl, "https://review-flow-seven.vercel.app"].filter(Boolean);
-app.use(cors({ origin: origins, credentials: true }));
+const allowedOrigins = [
+  env.frontendUrl,
+  "https://review-flow-seven.vercel.app",
+  "https://review-flow-git-main-grow-bharat-vyapaars-projects.vercel.app"
+].filter(Boolean);
+
+app.use(cors({
+  origin: function (origin, callback) {
+    // Allow requests with no origin (like mobile apps or curl)
+    if (!origin) return callback(null, true);
+
+    if (allowedOrigins.indexOf(origin) !== -1 || origin.endsWith(".vercel.app")) {
+      return callback(null, true);
+    }
+
+    callback(new Error('Not allowed by CORS'));
+  },
+  credentials: true
+}));
 
 app.use(helmet({ crossOriginResourcePolicy: { policy: "cross-origin" } }));
 app.use(express.json({ limit: "750kb" }));
