@@ -1,6 +1,7 @@
 const express = require("express");
 const cors = require("cors");
 const helmet = require("helmet");
+const mongoose = require("mongoose");
 const env = require("./config/env");
 const connectDb = require("./config/db");
 const { getFirebaseApp } = require("./config/firebase");
@@ -12,6 +13,17 @@ const errorHandler = require("./middleware/errorHandler");
 getFirebaseApp();
 
 const app = express();
+
+// Middleware to ensure DB is connected for serverless environments
+app.use(async (req, res, next) => {
+  try {
+    await connectDb();
+    next();
+  } catch (err) {
+    console.error("[db] Request-time connection failed:", err.message);
+    res.status(500).json({ error: "Database connection failed", details: err.message });
+  }
+});
 
 app.set("trust proxy", 1);
 
@@ -63,9 +75,11 @@ if (require.main === module) {
       console.error("[server] Failed to start", error);
       process.exit(1);
     });
-} else {
-  // On Vercel, we still need to connect to the DB
-  connectDb();
 }
+
+// Global error handlers for Vercel logs
+process.on("unhandledRejection", (reason, promise) => {
+  console.error("Unhandled Rejection at:", promise, "reason:", reason);
+});
 
 module.exports = app;
