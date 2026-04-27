@@ -10,4 +10,6 @@ const reviewLogSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
+reviewLogSchema.index({ business: 1, createdAt: -1 });
+
 module.exports = mongoose.model("ReviewLog", reviewLogSchema);

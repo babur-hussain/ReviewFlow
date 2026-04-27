@@ -3,26 +3,36 @@ import { Copy, Download, ExternalLink, QrCode, RefreshCw } from "lucide-react";
 import { Link } from "react-router-dom";
 import { api } from "../lib/api";
 import { copyToClipboard } from "../lib/clipboard";
+import { useAuth } from "../context/AuthContext";
 
 export default function Dashboard() {
+  const { profile } = useAuth();
   const [data, setData] = useState(null);
+  const [loadingMetrics, setLoadingMetrics] = useState(true);
   const [copied, setCopied] = useState(false);
 
   async function load() {
-    const payload = await api("/api/business/dashboard");
-    setData(payload);
+    try {
+      const payload = await api("/api/business/dashboard");
+      setData(payload);
+    } finally {
+      setLoadingMetrics(false);
+    }
   }
 
   useEffect(() => { load(); }, []);
 
+  // Use profile.business as initial state for the business details
+  const business = data?.business || profile?.business;
+  const metrics = data?.metrics;
+
   const ratingMap = useMemo(() => {
     const map = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
-    data?.metrics.ratingBreakdown.forEach((row) => { map[row._id] = row.count; });
+    metrics?.ratingBreakdown.forEach((row) => { map[row._id] = row.count; });
     return map;
-  }, [data]);
+  }, [metrics]);
 
-  if (!data) return <div className="page-center">Loading dashboard...</div>;
-  const { business, metrics } = data;
+  if (!business) return <div className="page-center">Loading your workspace...</div>;
   const maxRating = Math.max(1, ...Object.values(ratingMap));
 
   function download(dataUrl, filename) {
@@ -69,15 +79,46 @@ export default function Dashboard() {
             <button className="secondary-button" onClick={regenerateQr}><RefreshCw size={16} /> Regenerate</button>
           </div>
         </div>
-        <div className="panel stat"><span>{metrics.thisMonth}</span><p>Reviews initiated this month</p></div>
-        <div className="panel stat"><span>{metrics.allTime}</span><p>Reviews initiated all time</p></div>
+        <div className="panel stat">
+          {loadingMetrics ? <div className="skeleton short" /> : <span>{metrics.thisMonth}</span>}
+          <p>Reviews initiated this month</p>
+        </div>
+        <div className="panel stat">
+          {loadingMetrics ? <div className="skeleton short" /> : <span>{metrics.allTime}</span>}
+          <p>Reviews initiated all time</p>
+        </div>
         <div className="panel wide">
           <p className="label-text">Star rating breakdown</p>
-          <div className="bars">{[5, 4, 3, 2, 1].map((rating) => <div className="bar-row" key={rating}><span>{rating} star</span><div><i style={{ width: `${(ratingMap[rating] / maxRating) * 100}%` }} /></div><b>{ratingMap[rating]}</b></div>)}</div>
+          <div className="bars">
+            {loadingMetrics ? (
+              [1, 2, 3].map(i => <div key={i} className="skeleton" style={{ height: '32px' }} />)
+            ) : (
+              [5, 4, 3, 2, 1].map((rating) => (
+                <div className="bar-row" key={rating}>
+                  <span>{rating} star</span>
+                  <div><i style={{ width: `${(ratingMap[rating] / maxRating) * 100}%` }} /></div>
+                  <b>{ratingMap[rating]}</b>
+                </div>
+              ))
+            )}
+          </div>
         </div>
         <div className="panel">
           <p className="label-text">Recent activity</p>
-          <div className="activity-list">{metrics.recent.length ? metrics.recent.map((item) => <div key={item._id}><span>{new Date(item.createdAt).toLocaleString()}</span><strong>{item.starRating} stars</strong></div>) : <p className="muted">No review activity yet.</p>}</div>
+          <div className="activity-list">
+            {loadingMetrics ? (
+              [1, 2, 3].map(i => <div key={i} className="skeleton" />)
+            ) : (
+              metrics.recent.length ? (
+                metrics.recent.map((item) => (
+                  <div key={item._id}>
+                    <span>{new Date(item.createdAt).toLocaleString()}</span>
+                    <strong>{item.starRating} stars</strong>
+                  </div>
+                ))
+              ) : <p className="muted">No review activity yet.</p>
+            )}
+          </div>
         </div>
         <div className="panel">
           <p className="label-text">Business tools</p>
