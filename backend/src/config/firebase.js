@@ -11,7 +11,7 @@ function getFirebaseApp() {
         credential: admin.credential.cert({
           projectId: env.firebaseProjectId,
           clientEmail: env.firebaseClientEmail,
-          privateKey: env.firebasePrivateKey.replace(/\\n/g, "\n"),
+          privateKey: env.firebasePrivateKey.replace(/\\n/g, "\n").replace(/^"(.*)"$/, "$1"),
         }),
       });
       console.log("[firebase] Initialized with individual keys");
