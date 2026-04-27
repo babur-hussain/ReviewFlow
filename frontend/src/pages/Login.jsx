@@ -13,7 +13,7 @@ import { useAuth } from "../context/AuthContext.jsx";
 
 function readableAuthError(error) {
   if (error.message === "Failed to fetch") {
-    return "Backend is not running at localhost:8080. Start the backend after adding MONGODB_URI in backend/.env.";
+    return `Connection to backup API failed. Please check your internet or verify if the API is running.`;
   }
 
   const code = error.code || "";

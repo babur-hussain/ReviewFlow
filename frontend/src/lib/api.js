@@ -18,6 +18,9 @@ export async function api(path, options = {}) {
   const response = await fetch(`${API_BASE}${path}`, {
     ...options,
     headers,
+  }).catch((err) => {
+    console.error(`[api] Fetch failed for ${API_BASE}${path}:`, err);
+    throw err;
   });
 
   const payload = await response.json().catch(() => ({}));
