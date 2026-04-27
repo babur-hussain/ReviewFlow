@@ -32,6 +32,7 @@ async function requireAuth(req, res, next) {
     req.user = user;
     next();
   } catch (error) {
+    console.error("[auth] Token verification failed:", error.message, error.code);
     if (process.env.NODE_ENV !== "production") {
       console.error("[auth] Firebase token verification failed:", {
         code: error.code,
@@ -39,7 +40,7 @@ async function requireAuth(req, res, next) {
         projectId: admin.app().options.projectId,
       });
     }
-    return res.status(401).json({ message: "Invalid or expired token" });
+    return res.status(401).json({ message: "Invalid or expired token", error: error.message });
   }
 }
 
