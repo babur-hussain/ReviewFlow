@@ -8,6 +8,8 @@ import {
   signInWithEmailAndPassword,
   signInWithPopup,
   signOut,
+  setPersistence,
+  browserLocalPersistence
 } from "firebase/auth";
 
 const firebaseConfig = {
@@ -21,10 +23,13 @@ const firebaseConfig = {
 };
 
 const app = initializeApp(firebaseConfig);
+export const auth = getAuth(app);
+setPersistence(auth, browserLocalPersistence);
+
 export const analyticsPromise = isSupported().then((supported) =>
   supported && firebaseConfig.measurementId ? getAnalytics(app) : null
 );
-export const auth = getAuth(app);
+
 export const googleProvider = new GoogleAuthProvider();
 
 export {
