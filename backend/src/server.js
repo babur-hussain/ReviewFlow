@@ -25,11 +25,18 @@ app.use("/api/business", businessRoutes);
 app.use("/api/review", publicReviewRoutes);
 app.use(errorHandler);
 
-connectDb()
-  .then(() => {
-    app.listen(env.port, () => console.log(`[server] Listening on ${env.port}`));
-  })
-  .catch((error) => {
-    console.error("[server] Failed to start", error);
-    process.exit(1);
-  });
+if (require.main === module) {
+  connectDb()
+    .then(() => {
+      app.listen(env.port, () => console.log(`[server] Listening on ${env.port}`));
+    })
+    .catch((error) => {
+      console.error("[server] Failed to start", error);
+      process.exit(1);
+    });
+} else {
+  // On Vercel, we still need to connect to the DB
+  connectDb();
+}
+
+module.exports = app;
