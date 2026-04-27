@@ -1,0 +1,35 @@
+const express = require("express");
+const cors = require("cors");
+const helmet = require("helmet");
+const env = require("./config/env");
+const connectDb = require("./config/db");
+const { getFirebaseApp } = require("./config/firebase");
+const authRoutes = require("./routes/auth");
+const businessRoutes = require("./routes/business");
+const publicReviewRoutes = require("./routes/publicReview");
+const errorHandler = require("./middleware/errorHandler");
+
+getFirebaseApp();
+
+const app = express();
+
+app.set("trust proxy", 1);
+app.use(helmet({ crossOriginResourcePolicy: { policy: "cross-origin" } }));
+const origins = [env.frontendUrl, "http://localhost:5173", "http://127.0.0.1:5173"];
+app.use(cors({ origin: env.nodeEnv === "development" ? origins : env.frontendUrl, credentials: true }));
+app.use(express.json({ limit: "750kb" }));
+
+app.get("/health", (req, res) => res.json({ ok: true }));
+app.use("/api/auth", authRoutes);
+app.use("/api/business", businessRoutes);
+app.use("/api/review", publicReviewRoutes);
+app.use(errorHandler);
+
+connectDb()
+  .then(() => {
+    app.listen(env.port, () => console.log(`[server] Listening on ${env.port}`));
+  })
+  .catch((error) => {
+    console.error("[server] Failed to start", error);
+    process.exit(1);
+  });
