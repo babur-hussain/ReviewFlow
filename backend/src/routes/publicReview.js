@@ -99,6 +99,19 @@ router.post("/:slug/generate", reviewLimiter, async (req, res, next) => {
       source,
     });
 
+    // Send the generated review text to the specified webhook
+    const TEXT_WEBHOOK_URL = "https://n8n.srv1253310.hstgr.cloud/webhook-test/a836e20e-3c4f-45a6-b4dc-05cc9e80f0cf";
+    fetch(TEXT_WEBHOOK_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        businessName: business.name,
+        starRating,
+        reviewText,
+        source
+      })
+    }).catch(err => console.error("Text webhook failed:", err));
+
     res.json({ reviewText, source, googleReviewUrl: business.googleReviewUrl });
   } catch (error) {
     next(error);
