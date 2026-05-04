@@ -87,42 +87,46 @@ export default function PublicReview() {
         throw new Error(errText || "Failed to enhance photo");
       }
 
-      const contentType = response.headers.get("content-type") || "";
-
-      if (contentType.includes("image")) {
-        // Response is a binary image
-        const blob = await response.blob();
-        const url = URL.createObjectURL(blob);
-        setEnhancedImage(url);
-      } else if (contentType.includes("json")) {
-        // Response is JSON with image URL or base64
-        const rawData = await response.json();
-        console.log("Webhook response data:", rawData);
-        // N8N often returns an array for its node output
-        const data = Array.isArray(rawData) ? rawData[0] : rawData;
-        
-        if (data && data.imageUrl) {
-          setEnhancedImage(data.imageUrl);
-        } else if (data && data.image) {
-          setEnhancedImage(`data:image/png;base64,${data.image}`);
-        } else if (data && data.url) {
-          setEnhancedImage(data.url);
-        } else if (rawData.message) {
-          // If it's a message like "Workflow got started"
-          throw new Error(`Webhook says: ${rawData.message}`);
-        } else {
-          console.error("Unrecognized data format from webhook:", rawData);
-          throw new Error("No enhanced image returned (check console for data)");
+      const initData = await response.json();
+      if (!initData.jobId) {
+        if (initData.imageUrl) {
+          setEnhancedImage(initData.imageUrl);
+          setPhotoLoading(false);
+          return;
         }
-      } else {
-        // Try as blob anyway
-        const blob = await response.blob();
-        const url = URL.createObjectURL(blob);
-        setEnhancedImage(url);
+        throw new Error("No job ID returned from server");
       }
+
+      const jobId = initData.jobId;
+      setPhotoError("AI is generating your image... This may take a few minutes.");
+
+      // Start Polling
+      const pollInterval = setInterval(async () => {
+        try {
+          const pollRes = await fetch(`${import.meta.env.VITE_API_BASE_URL || ""}/api/review/photo-job/${jobId}`);
+          if (!pollRes.ok) return;
+          
+          const jobData = await pollRes.json();
+          if (jobData.status === "completed" && jobData.enhancedImageUrl) {
+            clearInterval(pollInterval);
+            setEnhancedImage(jobData.enhancedImageUrl);
+            setPhotoError("");
+            setPhotoLoading(false);
+          } else if (jobData.status === "failed") {
+            clearInterval(pollInterval);
+            setPhotoError("AI image generation failed.");
+            setPhotoLoading(false);
+          }
+        } catch (pollErr) {
+          console.error("Polling error:", pollErr);
+        }
+      }, 5000);
+
+      // Keep photoLoading true until interval clears
+      return; // prevent the finally block from setting photoLoading to false immediately
+
     } catch (err) {
       setPhotoError(err.message || "Failed to enhance photo");
-    } finally {
       setPhotoLoading(false);
     }
   }

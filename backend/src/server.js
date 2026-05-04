@@ -73,6 +73,7 @@ app.get("/health", async (req, res) => {
 app.use("/api/auth", authRoutes);
 app.use("/api/business", businessRoutes);
 app.use("/api/review", publicReviewRoutes);
+app.use("/api/webhook", require("./routes/webhook"));
 app.use(errorHandler);
 
 if (require.main === module) {

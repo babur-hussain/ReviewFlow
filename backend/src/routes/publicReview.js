@@ -134,6 +134,8 @@ cloudinary.config({
 
 const upload = multer({ storage: multer.memoryStorage() });
 
+const PhotoJob = require("../models/PhotoJob");
+
 router.post("/:slug/enhance-photo", upload.single("photo"), async (req, res, next) => {
   try {
     if (!req.file) return res.status(400).json({ message: "No photo provided" });
@@ -154,42 +156,45 @@ router.post("/:slug/enhance-photo", upload.single("photo"), async (req, res, nex
       return res.json({ imageUrl: photoUrl });
     }
 
-    // Call N8N Webhook with the URL
-    const webhookRes = await fetch(env.photoWebhookUrl, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ 
-        url: photoUrl,
-        cloudinaryUrl: photoUrl
-      }),
+    // Create a new PhotoJob in MongoDB
+    const job = await PhotoJob.create({ originalImageUrl: photoUrl });
+
+    // Fire and forget (don't wait for response to avoid holding up the Vercel function, wait actually we SHOULD wait for it to fire but we don't care about the result body anymore)
+    // Wait, in Vercel we should await it so it actually sends.
+    try {
+      await fetch(env.photoWebhookUrl, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ 
+          url: photoUrl,
+          cloudinaryUrl: photoUrl,
+          jobId: job._id.toString()
+        }),
+      });
+    } catch (err) {
+      console.error("N8N webhook trigger failed:", err);
+    }
+
+    // Immediately return the jobId so the frontend can start polling
+    return res.json({ jobId: job._id.toString(), status: "pending" });
+
+  } catch (error) {
+    next(error);
+  }
+});
+
+// Polling endpoint for frontend
+router.get("/photo-job/:jobId", async (req, res, next) => {
+  try {
+    const job = await PhotoJob.findById(req.params.jobId);
+    if (!job) return res.status(404).json({ message: "Job not found" });
+
+    res.json({
+      jobId: job._id,
+      status: job.status,
+      originalImageUrl: job.originalImageUrl,
+      enhancedImageUrl: job.enhancedImageUrl
     });
-
-    if (!webhookRes.ok) {
-      throw new Error(`Webhook failed with status ${webhookRes.status}`);
-    }
-
-    const contentType = webhookRes.headers.get("content-type") || "";
-
-    if (contentType.includes("image")) {
-      const arrayBuffer = await webhookRes.arrayBuffer();
-      const buffer = Buffer.from(arrayBuffer);
-      res.set("Content-Type", contentType);
-      return res.send(buffer);
-    } else if (contentType.includes("json")) {
-      const text = await webhookRes.text();
-      try {
-        const data = text ? JSON.parse(text) : {};
-        return res.json(data);
-      } catch (err) {
-        // N8N sometimes returns non-JSON text like "Workflow got started." with application/json header
-        return res.json({ message: "Webhook responded, but not with valid JSON", raw: text, imageUrl: photoUrl });
-      }
-    } else {
-      const arrayBuffer = await webhookRes.arrayBuffer();
-      const buffer = Buffer.from(arrayBuffer);
-      res.set("Content-Type", "image/png");
-      return res.send(buffer);
-    }
   } catch (error) {
     next(error);
   }
