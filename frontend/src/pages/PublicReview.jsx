@@ -96,15 +96,23 @@ export default function PublicReview() {
         setEnhancedImage(url);
       } else if (contentType.includes("json")) {
         // Response is JSON with image URL or base64
-        const data = await response.json();
-        if (data.imageUrl) {
+        const rawData = await response.json();
+        console.log("Webhook response data:", rawData);
+        // N8N often returns an array for its node output
+        const data = Array.isArray(rawData) ? rawData[0] : rawData;
+        
+        if (data && data.imageUrl) {
           setEnhancedImage(data.imageUrl);
-        } else if (data.image) {
+        } else if (data && data.image) {
           setEnhancedImage(`data:image/png;base64,${data.image}`);
-        } else if (data.url) {
+        } else if (data && data.url) {
           setEnhancedImage(data.url);
+        } else if (rawData.message) {
+          // If it's a message like "Workflow got started"
+          throw new Error(`Webhook says: ${rawData.message}`);
         } else {
-          throw new Error("No enhanced image returned");
+          console.error("Unrecognized data format from webhook:", rawData);
+          throw new Error("No enhanced image returned (check console for data)");
         }
       } else {
         // Try as blob anyway
