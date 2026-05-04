@@ -54,6 +54,7 @@ export default function PublicReview() {
     setPhotoPreview(URL.createObjectURL(file));
     setEnhancedImage(null);
     setPhotoError("");
+    uploadPhoto(file); // Trigger instantly
   }
 
   function removePhoto() {
@@ -65,14 +66,15 @@ export default function PublicReview() {
     if (fileInputRef.current) fileInputRef.current.value = "";
   }
 
-  async function uploadPhoto() {
-    if (!photoFile) return;
+  async function uploadPhoto(fileToUpload) {
+    const file = fileToUpload || photoFile;
+    if (!file) return;
     setPhotoLoading(true);
     setPhotoError("");
     setEnhancedImage(null);
     try {
       const formData = new FormData();
-      formData.append("photo", photoFile);
+      formData.append("photo", file);
 
       const res = await fetch(WEBHOOK_URL, {
         method: "POST",
@@ -167,7 +169,7 @@ export default function PublicReview() {
                   )}
                 </div>
 
-                {photoLoading ? (
+                {photoLoading && (
                   <div className="ai-loading-container">
                     <div className="ai-loading-orb">
                       <div className="ai-orb-ring" />
@@ -180,11 +182,6 @@ export default function PublicReview() {
                       <span /><span /><span />
                     </div>
                   </div>
-                ) : (
-                  <button className="enhance-button" onClick={uploadPhoto}>
-                    <Sparkles size={18} />
-                    Enhance with AI
-                  </button>
                 )}
               </div>
             )}
