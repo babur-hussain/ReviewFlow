@@ -158,8 +158,14 @@ router.post("/:slug/enhance-photo", upload.single("photo"), async (req, res, nex
       res.set("Content-Type", contentType);
       return res.send(buffer);
     } else if (contentType.includes("json")) {
-      const data = await webhookRes.json();
-      return res.json(data);
+      const text = await webhookRes.text();
+      try {
+        const data = text ? JSON.parse(text) : {};
+        return res.json(data);
+      } catch (err) {
+        // N8N sometimes returns non-JSON text like "Workflow got started." with application/json header
+        return res.json({ message: "Webhook responded, but not with valid JSON", raw: text, imageUrl: photoUrl });
+      }
     } else {
       const arrayBuffer = await webhookRes.arrayBuffer();
       const buffer = Buffer.from(arrayBuffer);
