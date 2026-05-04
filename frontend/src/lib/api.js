@@ -39,6 +39,14 @@ export async function publicApi(path, options = {}) {
       "Content-Type": "application/json",
       ...(options.headers || {}),
     },
+  }).catch((err) => {
+    // iOS Safari throws TypeError: "Load failed" for network/CORS failures.
+    // Replace with a user-friendly message.
+    const msg = err?.message?.toLowerCase() || "";
+    if (msg.includes("load failed") || msg.includes("network") || msg.includes("failed to fetch")) {
+      throw new Error("Network error. Please check your connection and try again.");
+    }
+    throw err;
   });
   const payload = await response.json().catch(() => ({}));
   if (!response.ok) {

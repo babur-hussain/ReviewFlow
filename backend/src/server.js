@@ -14,29 +14,19 @@ getFirebaseApp();
 
 const app = express();
 
-// Middleware to ensure DB is connected for serverless environments
-app.use(async (req, res, next) => {
-  try {
-    await connectDb();
-    next();
-  } catch (err) {
-    console.error("[db] Request-time connection failed:", err.message);
-    res.status(500).json({ error: "Database connection failed", details: err.message });
-  }
-});
-
 app.set("trust proxy", 1);
 
-// Configure CORS first to ensure headers are always present
+// Configure CORS FIRST — must be before DB middleware so iOS Safari
+// preflight OPTIONS requests get immediate CORS headers without waiting for DB.
 const allowedOrigins = [
   env.frontendUrl,
   "https://review-flow-seven.vercel.app",
   "https://review-flow-git-main-grow-bharat-vyapaars-projects.vercel.app"
 ].filter(Boolean);
 
-app.use(cors({
+const corsOptions = {
   origin: function (origin, callback) {
-    // Allow requests with no origin (like mobile apps or curl)
+    // Allow requests with no origin (mobile apps, curl, same-origin)
     if (!origin) return callback(null, true);
 
     if (allowedOrigins.indexOf(origin) !== -1 ||
@@ -49,7 +39,23 @@ app.use(cors({
     callback(new Error('Not allowed by CORS'));
   },
   credentials: true
-}));
+};
+
+app.use(cors(corsOptions));
+
+// Explicitly handle OPTIONS preflight for all routes (fixes iOS Safari)
+app.options("*", cors(corsOptions));
+
+// Middleware to ensure DB is connected for serverless environments
+app.use(async (req, res, next) => {
+  try {
+    await connectDb();
+    next();
+  } catch (err) {
+    console.error("[db] Request-time connection failed:", err.message);
+    res.status(500).json({ error: "Database connection failed", details: err.message });
+  }
+});
 
 app.use(helmet({ crossOriginResourcePolicy: { policy: "cross-origin" } }));
 app.use(express.json({ limit: "750kb" }));
