@@ -5,7 +5,6 @@ import { publicApi } from "../lib/api";
 import { copyToClipboard } from "../lib/clipboard";
 import StarRating from "../components/StarRating.jsx";
 
-const WEBHOOK_URL = import.meta.env.VITE_PHOTO_WEBHOOK_URL;
 
 export default function PublicReview() {
   const { slug } = useParams();
@@ -76,27 +75,37 @@ export default function PublicReview() {
       const formData = new FormData();
       formData.append("photo", file);
 
-      const res = await fetch(WEBHOOK_URL, {
+      // Using the backend proxy instead of hitting the webhook directly to avoid CORS 
+      // and to safely upload the photo to Cloudinary first
+      const res = await publicApi(`/api/review/${slug}/enhance-photo`, {
+        method: "POST",
+        body: formData,
+      }, true); // Setting true if publicApi accepts a raw format, but wait!
+      // Let's use fetch directly since publicApi might stringify or set headers that conflict with FormData
+      
+      const response = await fetch(`${import.meta.env.VITE_API_BASE_URL || ""}/api/review/${slug}/enhance-photo`, {
         method: "POST",
         body: formData,
       });
 
-      if (!res.ok) throw new Error("Failed to enhance photo");
+      if (!response.ok) {
+        const errText = await response.text();
+        throw new Error(errText || "Failed to enhance photo");
+      }
 
-      const contentType = res.headers.get("content-type") || "";
+      const contentType = response.headers.get("content-type") || "";
 
       if (contentType.includes("image")) {
         // Response is a binary image
-        const blob = await res.blob();
+        const blob = await response.blob();
         const url = URL.createObjectURL(blob);
         setEnhancedImage(url);
       } else if (contentType.includes("json")) {
         // Response is JSON with image URL or base64
-        const data = await res.json();
+        const data = await response.json();
         if (data.imageUrl) {
           setEnhancedImage(data.imageUrl);
         } else if (data.image) {
-          // base64 image
           setEnhancedImage(`data:image/png;base64,${data.image}`);
         } else if (data.url) {
           setEnhancedImage(data.url);
@@ -105,7 +114,7 @@ export default function PublicReview() {
         }
       } else {
         // Try as blob anyway
-        const blob = await res.blob();
+        const blob = await response.blob();
         const url = URL.createObjectURL(blob);
         setEnhancedImage(url);
       }

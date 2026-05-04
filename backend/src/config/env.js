@@ -22,4 +22,8 @@ module.exports = {
   openRouterApiKey: process.env.OPENROUTER_API_KEY,
   openRouterModel: process.env.OPENROUTER_MODEL || "anthropic/claude-sonnet-4-5",
   publicBaseUrl: process.env.PUBLIC_BASE_URL || process.env.FRONTEND_URL,
+  cloudinaryCloudName: process.env.CLOUDINARY_CLOUD_NAME,
+  cloudinaryApiKey: process.env.CLOUDINARY_API_KEY,
+  cloudinaryApiSecret: process.env.CLOUDINARY_API_SECRET,
+  photoWebhookUrl: process.env.N8N_PHOTO_WEBHOOK_URL,
 };

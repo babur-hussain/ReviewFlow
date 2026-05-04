@@ -105,4 +105,67 @@ router.post("/:slug/generate", reviewLimiter, async (req, res, next) => {
   }
 });
 
+const multer = require("multer");
+const cloudinary = require("cloudinary").v2;
+
+cloudinary.config({
+  cloud_name: env.cloudinaryCloudName,
+  api_key: env.cloudinaryApiKey,
+  api_secret: env.cloudinaryApiSecret,
+});
+
+const upload = multer({ storage: multer.memoryStorage() });
+
+router.post("/:slug/enhance-photo", upload.single("photo"), async (req, res, next) => {
+  try {
+    if (!req.file) return res.status(400).json({ message: "No photo provided" });
+
+    // Upload to Cloudinary
+    const b64 = Buffer.from(req.file.buffer).toString("base64");
+    const dataURI = "data:" + req.file.mimetype + ";base64," + b64;
+    
+    const cldRes = await cloudinary.uploader.upload(dataURI, {
+      resource_type: "auto",
+      folder: "reviews",
+    });
+
+    const photoUrl = cldRes.secure_url;
+
+    if (!env.photoWebhookUrl) {
+      // Just return the Cloudinary URL if no webhook is configured
+      return res.json({ imageUrl: photoUrl });
+    }
+
+    // Call N8N Webhook with the URL
+    const webhookRes = await fetch(env.photoWebhookUrl, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ url: photoUrl }), // Adjust property name if needed by n8n
+    });
+
+    if (!webhookRes.ok) {
+      throw new Error(`Webhook failed with status ${webhookRes.status}`);
+    }
+
+    const contentType = webhookRes.headers.get("content-type") || "";
+
+    if (contentType.includes("image")) {
+      const arrayBuffer = await webhookRes.arrayBuffer();
+      const buffer = Buffer.from(arrayBuffer);
+      res.set("Content-Type", contentType);
+      return res.send(buffer);
+    } else if (contentType.includes("json")) {
+      const data = await webhookRes.json();
+      return res.json(data);
+    } else {
+      const arrayBuffer = await webhookRes.arrayBuffer();
+      const buffer = Buffer.from(arrayBuffer);
+      res.set("Content-Type", "image/png");
+      return res.send(buffer);
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+
 module.exports = router;
