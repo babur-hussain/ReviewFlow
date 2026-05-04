@@ -140,7 +140,10 @@ router.post("/:slug/enhance-photo", upload.single("photo"), async (req, res, nex
     const webhookRes = await fetch(env.photoWebhookUrl, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ url: photoUrl }), // Adjust property name if needed by n8n
+      body: JSON.stringify({ 
+        url: photoUrl,
+        cloudinaryUrl: photoUrl
+      }),
     });
 
     if (!webhookRes.ok) {
