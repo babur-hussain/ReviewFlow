@@ -77,12 +77,6 @@ export default function PublicReview() {
 
       // Using the backend proxy instead of hitting the webhook directly to avoid CORS 
       // and to safely upload the photo to Cloudinary first
-      const res = await publicApi(`/api/review/${slug}/enhance-photo`, {
-        method: "POST",
-        body: formData,
-      }, true); // Setting true if publicApi accepts a raw format, but wait!
-      // Let's use fetch directly since publicApi might stringify or set headers that conflict with FormData
-      
       const response = await fetch(`${import.meta.env.VITE_API_BASE_URL || ""}/api/review/${slug}/enhance-photo`, {
         method: "POST",
         body: formData,
