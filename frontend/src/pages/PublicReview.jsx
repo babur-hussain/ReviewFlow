@@ -1,9 +1,11 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { RefreshCw, Send } from "lucide-react";
+import { RefreshCw, Send, Camera, X, Sparkles } from "lucide-react";
 import { publicApi } from "../lib/api";
 import { copyToClipboard } from "../lib/clipboard";
 import StarRating from "../components/StarRating.jsx";
+
+const WEBHOOK_URL = import.meta.env.VITE_PHOTO_WEBHOOK_URL;
 
 export default function PublicReview() {
   const { slug } = useParams();
@@ -13,6 +15,14 @@ export default function PublicReview() {
   const [reviewText, setReviewText] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+
+  // Photo states
+  const [photoFile, setPhotoFile] = useState(null);
+  const [photoPreview, setPhotoPreview] = useState(null);
+  const [enhancedImage, setEnhancedImage] = useState(null);
+  const [photoLoading, setPhotoLoading] = useState(false);
+  const [photoError, setPhotoError] = useState("");
+  const fileInputRef = useRef(null);
 
   useEffect(() => {
     publicApi(`/api/review/${slug}`)
@@ -37,6 +47,73 @@ export default function PublicReview() {
     }
   }
 
+  function handlePhotoSelect(e) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setPhotoFile(file);
+    setPhotoPreview(URL.createObjectURL(file));
+    setEnhancedImage(null);
+    setPhotoError("");
+  }
+
+  function removePhoto() {
+    setPhotoFile(null);
+    if (photoPreview) URL.revokeObjectURL(photoPreview);
+    setPhotoPreview(null);
+    setEnhancedImage(null);
+    setPhotoError("");
+    if (fileInputRef.current) fileInputRef.current.value = "";
+  }
+
+  async function uploadPhoto() {
+    if (!photoFile) return;
+    setPhotoLoading(true);
+    setPhotoError("");
+    setEnhancedImage(null);
+    try {
+      const formData = new FormData();
+      formData.append("photo", photoFile);
+
+      const res = await fetch(WEBHOOK_URL, {
+        method: "POST",
+        body: formData,
+      });
+
+      if (!res.ok) throw new Error("Failed to enhance photo");
+
+      const contentType = res.headers.get("content-type") || "";
+
+      if (contentType.includes("image")) {
+        // Response is a binary image
+        const blob = await res.blob();
+        const url = URL.createObjectURL(blob);
+        setEnhancedImage(url);
+      } else if (contentType.includes("json")) {
+        // Response is JSON with image URL or base64
+        const data = await res.json();
+        if (data.imageUrl) {
+          setEnhancedImage(data.imageUrl);
+        } else if (data.image) {
+          // base64 image
+          setEnhancedImage(`data:image/png;base64,${data.image}`);
+        } else if (data.url) {
+          setEnhancedImage(data.url);
+        } else {
+          throw new Error("No enhanced image returned");
+        }
+      } else {
+        // Try as blob anyway
+        const blob = await res.blob();
+        const url = URL.createObjectURL(blob);
+        setEnhancedImage(url);
+      }
+    } catch (err) {
+      setPhotoError(err.message || "Failed to enhance photo");
+    } finally {
+      setPhotoLoading(false);
+    }
+  }
+
   async function postReview() {
     const copied = await copyToClipboard(reviewText);
     sessionStorage.setItem(
@@ -57,6 +134,73 @@ export default function PublicReview() {
         <p className="muted">Pick a rating and we will draft a natural review you can paste on Google.</p>
         <StarRating value={rating} onChange={generate} disabled={loading} />
         {loading && <div className="review-card"><div className="skeleton" /><div className="skeleton short" /><div className="skeleton" /></div>}
+
+        {/* Photo Upload Section — visible as soon as stars are picked */}
+        {rating > 0 && (
+          <div className="photo-upload-section">
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              capture="environment"
+              onChange={handlePhotoSelect}
+              className="photo-input-hidden"
+              id="photo-input"
+            />
+
+            {!photoPreview && !enhancedImage && (
+              <label htmlFor="photo-input" className="photo-upload-trigger">
+                <Camera size={22} />
+                <span>Attach a photo</span>
+                <span className="photo-upload-hint">AI will enhance your photo ✨</span>
+              </label>
+            )}
+
+            {photoPreview && !enhancedImage && (
+              <div className="photo-preview-container">
+                <div className="photo-preview-wrapper">
+                  <img src={photoPreview} alt="Selected" className="photo-preview-img" />
+                  {!photoLoading && (
+                    <button className="photo-remove-btn" onClick={removePhoto} aria-label="Remove photo">
+                      <X size={16} />
+                    </button>
+                  )}
+                </div>
+
+                {photoLoading ? (
+                  <div className="ai-loading-container">
+                    <div className="ai-loading-orb">
+                      <div className="ai-orb-ring" />
+                      <div className="ai-orb-ring delay-1" />
+                      <div className="ai-orb-ring delay-2" />
+                      <Sparkles size={24} className="ai-orb-icon" />
+                    </div>
+                    <p className="ai-loading-text">AI is enhancing your photo…</p>
+                    <div className="ai-loading-dots">
+                      <span /><span /><span />
+                    </div>
+                  </div>
+                ) : (
+                  <button className="enhance-button" onClick={uploadPhoto}>
+                    <Sparkles size={18} />
+                    Enhance with AI
+                  </button>
+                )}
+              </div>
+            )}
+
+            {enhancedImage && (
+              <div className="enhanced-result">
+                <div className="enhanced-badge"><Sparkles size={14} /> AI Enhanced</div>
+                <img src={enhancedImage} alt="AI Enhanced" className="enhanced-img" />
+                <button className="link-button" onClick={removePhoto}>Remove photo</button>
+              </div>
+            )}
+
+            {photoError && <p className="error photo-error">{photoError}</p>}
+          </div>
+        )}
+
         {reviewText && !loading && (
           <>
             <article className="review-card">{reviewText}</article>
