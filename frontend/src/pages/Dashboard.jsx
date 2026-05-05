@@ -185,6 +185,11 @@ export default function Dashboard() {
         </motion.div>
 
       </motion.div>
+
+      <footer style={{ marginTop: '4rem', paddingTop: '2rem', borderTop: '1px solid rgba(0,0,0,0.05)', textAlign: 'center' }}>
+        <Link to="/privacy" style={{ color: '#64748b', textDecoration: 'none', fontSize: '0.875rem', fontWeight: 500 }}>Privacy Policy</Link>
+        <p style={{ color: '#94a3b8', fontSize: '0.75rem', marginTop: '0.5rem' }}>&copy; 2026 ReviewFlow Inc.</p>
+      </footer>
     </div>
   );
 }
