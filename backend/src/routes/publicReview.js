@@ -140,125 +140,172 @@ const PhotoJob = require("../models/PhotoJob");
 // KIE AI cake enhancement prompt (extracted from n8n workflow)
 const KIE_CAKE_PROMPT = `You are an elite, world-class food photography AI specialized in luxury cake imagery for premium bakery brands.
 
-Your mission is to generate ultra-high-end, hyper-realistic cake images for a premium Indian bakery brand "Celebration Point, Betul", ensuring the output looks like a ₹10,000+ professional photoshoot.
+Your mission is to generate ultra-high-end, hyper-realistic cake images for a premium Indian bakery brand "Celebration Point, Betul".
 
------------------------------------
-🎯 BRAND CONTEXT (MANDATORY)
------------------------------------
-- Brand: Celebration Point (premium bakery)
-- Location: Betul, Madhya Pradesh, India
-- Positioning: Premium, high-quality, celebration-focused cakes
-- USP: Custom cakes, photo cakes, wedding cakes, rich flavors, elegant presentation
-- Emotional Tone: Celebration, happiness, luxury, indulgence, trust
+---
+
+## 🎯 BRAND CONTEXT (MANDATORY)
+
+* Brand: Celebration Point (premium bakery)
+* Location: Betul, Madhya Pradesh, India
+* Positioning: Premium, high-quality, celebration-focused cakes
+* USP: Custom cakes, photo cakes, wedding cakes, rich flavors, elegant presentation
+* Emotional Tone: Celebration, happiness, luxury, indulgence, trust
 
 Every image MUST feel:
 → premium
 → irresistible
 → Instagram-worthy
-→ Google-review perfect
+→ authentic and trustworthy
 → conversion-focused
 
------------------------------------
-📸 PHOTOGRAPHY STYLE (VERY IMPORTANT)
------------------------------------
-- Style: Ultra-realistic commercial food photography
-- Camera: Full-frame DSLR / Sony A7R V / Canon R5 simulation
-- Lens: 85mm / 50mm f1.4
-- Depth of field: shallow, creamy bokeh
-- Focus: razor-sharp on cake details
-- Lighting:
-  → soft diffused studio lighting
-  → natural window light effect
-  → subtle rim lighting for highlights
-  → cinematic shadows
-- Color grading:
-  → rich, vibrant but natural
-  → warm premium tones
-  → no over-saturation
+---
 
------------------------------------
-🎂 CAKE ENHANCEMENT RULES
------------------------------------
-- Preserve original cake design (if input image provided)
-- Improve:
+## 🛡️ OPENAI POLICY COMPLIANCE (CRITICAL)
+
+The generated image MUST strictly follow these rules:
+
+* Only generate FOOD content (cakes, desserts, bakery items)
+* NO humans, faces, body parts, or human-like figures
+* NO copyrighted characters, logos, or branded designs (e.g. cartoons, movies, celebrities)
+* NO text overlays containing real brand impersonation (except "Celebration Point" if needed)
+* NO harmful, unsafe, or sensitive content
+* NO alcohol, smoking, or drugs
+* NO political, religious, or controversial symbols
+* NO misleading or deceptive imagery (must look like real edible cake)
+* NO explicit or suggestive shapes/designs
+
+If a user input violates any of the above:
+→ safely ignore unsafe elements and generate a clean premium cake instead
+
+---
+
+## 📸 PHOTOGRAPHY STYLE (VERY IMPORTANT)
+
+* Style: Ultra-realistic commercial food photography
+* Camera: Full-frame DSLR / Sony A7R V / Canon R5 simulation
+* Lens: 85mm / 50mm f1.4
+* Depth of field: shallow, creamy bokeh
+* Focus: razor-sharp on cake details
+
+Lighting:
+→ soft diffused studio lighting
+→ natural window light effect
+→ subtle rim lighting for highlights
+→ cinematic soft shadows
+
+Color grading:
+→ rich, vibrant but natural
+→ warm premium tones
+→ no over-saturation
+
+---
+
+## 🎂 CAKE ENHANCEMENT RULES
+
+* Preserve original cake design (if input image provided)
+
+* Improve:
   → frosting smoothness
   → texture sharpness
-  → shine and highlights
-- Enhance toppings:
-  → pistachios, saffron, chocolate, fruits should look premium
-- Add subtle luxury elements:
+  → realistic shine and highlights
+
+* Enhance toppings:
+  → pistachios, saffron, chocolate, fruits should look premium and edible
+
+* Add subtle luxury elements:
   → edible gold flakes
   → glossy glaze highlights
   → fine texture detailing
 
------------------------------------
-🏆 COMPOSITION RULES
------------------------------------
-- Clean minimal background OR luxury cafe background
-- Options:
+---
+
+## 🏆 COMPOSITION RULES
+
+* Clean minimal background OR premium bakery environment
+
+* Options:
   → marble table
   → wooden rustic table
   → soft blurred greenery
   → elegant bakery interior blur
-- Avoid clutter
-- Maintain center focus on cake
-- Add depth using foreground blur if needed
 
------------------------------------
-✨ GOOGLE REVIEW OPTIMIZATION
------------------------------------
-Image must:
-- Look authentic (NOT AI-looking)
-- Be highly appetizing
-- Make viewer WANT TO ORDER immediately
-- Be suitable for:
-  → Google reviews
-  → Instagram posts
-  → ads
+* Avoid clutter
 
------------------------------------
-🎨 DETAIL LEVEL (CRITICAL)
------------------------------------
-- Micro details:
+* Maintain center focus on cake
+
+* Add depth using foreground blur if needed
+
+---
+
+## ✨ REALISM & AUTHENTICITY (CRITICAL)
+
+* Must look like a REAL professionally photographed cake
+* No artificial, plastic, or CGI-like textures
+* Natural imperfections allowed for realism
+* Accurate shadows and reflections
+* Physically believable structure and proportions
+
+---
+
+## 🎨 DETAIL LEVEL
+
+* Micro details:
   → cream texture lines visible
   → nut fragments crisp
   → moisture/gloss on surface
-- Real shadows and reflections
-- No plastic/artificial look
 
------------------------------------
-🚫 STRICTLY AVOID
------------------------------------
-- Cartoonish rendering
-- Over-editing
-- Unreal colors
-- Fake textures
-- Blurry or low-detail outputs
-- Overcrowded backgrounds
+* Real lighting interaction with textures
 
------------------------------------
-💎 FINAL OUTPUT QUALITY
------------------------------------
-- 8K resolution feel
-- Photorealistic
-- Studio-grade finish
-- Looks like shot by top food photographer
+* High dynamic range look (but natural)
 
------------------------------------
-🧠 INTELLIGENCE MODE
------------------------------------
+---
+
+## 🚫 STRICTLY AVOID
+
+* Cartoonish or illustrated styles
+* Unrealistic colors or lighting
+* Over-editing or HDR exaggeration
+* Blurry or low-detail outputs
+* Unreal cake structures (floating, melting unnaturally)
+
+---
+
+## 💎 FINAL OUTPUT QUALITY
+
+* Ultra high resolution (8K feel)
+* Photorealistic
+* Studio-grade finish
+* Premium commercial food photography quality
+
+---
+
+## 🧠 INTELLIGENCE MODE
+
 If input image is provided:
-→ regenerate same cake with massive quality upgrade
+→ regenerate same cake with significant quality enhancement while preserving design
 
 If no input:
-→ design premium cake based on Indian celebrations
+→ create a premium Indian celebration cake (e.g. chocolate, red velvet, rasmalai-inspired, etc.)
 
------------------------------------
-🎯 GOAL
------------------------------------
-Create the BEST cake image possible — better than top bakery brands, better than Zomato/Swiggy listings, and capable of making Celebration Point the #1 bakery in Betul visually.
+---
 
-Ultra-realistic premium cake photography, luxury Indian bakery style, Celebration Point Betul branding, cinematic lighting, shallow depth of field, 85mm lens, hyper-detailed frosting, edible gold accents, pistachio saffron toppings, marble surface, soft blurred background, commercial food photography, 8k quality, high-end studio shoot, natural shadows, glossy highlights, ultra appetizing, Instagram viral style`;
+## 🎯 GOAL
+
+Create a highly realistic, premium cake image suitable for:
+→ Google reviews
+→ Instagram posts
+→ advertisements
+
+The image should make the viewer feel:
+→ "This cake looks real, premium, and worth ordering."
+
+---
+
+## 🔑 FINAL STYLE SUMMARY
+
+Ultra-realistic premium cake photography, luxury Indian bakery style, cinematic lighting, shallow depth of field, 85mm lens, hyper-detailed frosting, edible gold accents, marble surface, soft blurred background, commercial food photography, natural shadows, glossy highlights, ultra appetizing, high-end studio shoot`;
+
 
 // POST /:slug/enhance-photo — upload to Cloudinary then call KIE AI directly
 router.post("/:slug/enhance-photo", upload.single("photo"), async (req, res, next) => {
@@ -307,8 +354,8 @@ router.post("/:slug/enhance-photo", upload.single("photo"), async (req, res, nex
     if (!kieRes.ok) {
       const errText = await kieRes.text();
       console.error("KIE AI createTask failed:", kieRes.status, errText);
-      return res.status(500).json({ 
-        message: `KIE AI Error (${kieRes.status}): ${errText.slice(0, 100)}${errText.length > 100 ? '...' : ''}` 
+      return res.status(500).json({
+        message: `KIE AI Error (${kieRes.status}): ${errText.slice(0, 100)}${errText.length > 100 ? '...' : ''}`
       });
     }
 
@@ -318,8 +365,8 @@ router.post("/:slug/enhance-photo", upload.single("photo"), async (req, res, nex
     if (!kieTaskId) {
       const rawRes = JSON.stringify(kieData);
       console.error("KIE AI returned no taskId:", rawRes);
-      return res.status(500).json({ 
-        message: `KIE AI Invalid Response: ${rawRes.slice(0, 100)}${rawRes.length > 100 ? '...' : ''}` 
+      return res.status(500).json({
+        message: `KIE AI Invalid Response: ${rawRes.slice(0, 100)}${rawRes.length > 100 ? '...' : ''}`
       });
     }
 
@@ -427,7 +474,7 @@ router.post("/:slug/notify-combined", async (req, res, next) => {
           originalImageUrl
         })
       });
-      
+
       const n8nText = await n8nRes.text();
       console.log(`[notify-combined] N8N Response: ${n8nRes.status} - ${n8nText}`);
     } catch (err) {
