@@ -159,7 +159,6 @@ export default function PublicReview() {
               ref={fileInputRef}
               type="file"
               accept="image/*"
-              capture="environment"
               onChange={handlePhotoSelect}
               className="photo-input-hidden"
               id="photo-input"
