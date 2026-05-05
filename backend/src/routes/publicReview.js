@@ -393,4 +393,37 @@ router.get("/photo-job/:jobId", async (req, res, next) => {
   }
 });
 
+router.post("/:slug/notify-combined", async (req, res, next) => {
+  try {
+    if (!env.combinedWebhookUrl) {
+      return res.json({ message: "Combined webhook not configured" });
+    }
+
+    const business = await Business.findOne({ slug: req.params.slug });
+    if (!business) return res.status(404).json({ message: "Business not found" });
+
+    const { reviewText, starRating, enhancedImageUrl, originalImageUrl } = req.body;
+
+    try {
+      await fetch(env.combinedWebhookUrl, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          businessName: business.name,
+          starRating,
+          reviewText,
+          enhancedImageUrl,
+          originalImageUrl
+        })
+      });
+    } catch (err) {
+      console.error("Combined webhook failed:", err);
+    }
+
+    res.json({ success: true });
+  } catch (error) {
+    next(error);
+  }
+});
+
 module.exports = router;

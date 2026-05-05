@@ -27,4 +27,5 @@ module.exports = {
   cloudinaryApiSecret: process.env.CLOUDINARY_API_SECRET,
   kieApiKey: process.env.KIE_API_KEY,
   textWebhookUrl: process.env.N8N_TEXT_WEBHOOK_URL,
+  combinedWebhookUrl: process.env.N8N_COMBINED_WEBHOOK_URL,
 };

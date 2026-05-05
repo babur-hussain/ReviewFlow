@@ -42,6 +42,7 @@ export default function PublicReview() {
   const [photoLoading, setPhotoLoading] = useState(false);
   const [photoError, setPhotoError] = useState("");
   const fileInputRef = useRef(null);
+  const lastNotifiedRef = useRef({ text: null, image: null });
 
   // Load business
   useEffect(() => {
@@ -58,6 +59,25 @@ export default function PublicReview() {
       if (saved.photoPreview) setPhotoPreview(saved.photoPreview);
     }
   }, [slug]);
+
+  // Trigger combined webhook when BOTH review and enhanced image exist
+  useEffect(() => {
+    if (reviewText && enhancedImage) {
+      if (lastNotifiedRef.current.text !== reviewText || lastNotifiedRef.current.image !== enhancedImage) {
+        lastNotifiedRef.current = { text: reviewText, image: enhancedImage };
+        
+        publicApi(`/api/review/${slug}/notify-combined`, {
+          method: "POST",
+          body: JSON.stringify({
+            reviewText,
+            starRating: rating,
+            enhancedImageUrl: enhancedImage,
+            originalImageUrl: photoPreview // Note: This sends base64, if webhook handles it, otherwise just enhanced
+          })
+        }).catch(err => console.error("Notify failed:", err));
+      }
+    }
+  }, [reviewText, enhancedImage, slug, rating, photoPreview]);
 
   async function generate(stars) {
     setRating(stars);
