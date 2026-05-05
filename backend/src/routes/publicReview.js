@@ -346,6 +346,7 @@ router.post("/:slug/enhance-photo", upload.single("photo"), async (req, res, nex
           prompt: KIE_CAKE_PROMPT,
           input_urls: [jpgUrl],
           aspect_ratio: "1:1",
+          resolution: "1K"
         },
       }),
       signal: AbortSignal.timeout(15000),
