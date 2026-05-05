@@ -187,8 +187,12 @@ export default function Dashboard() {
       </motion.div>
 
       <footer style={{ marginTop: '4rem', paddingTop: '2rem', borderTop: '1px solid rgba(0,0,0,0.05)', textAlign: 'center' }}>
-        <Link to="/privacy" style={{ color: '#64748b', textDecoration: 'none', fontSize: '0.875rem', fontWeight: 500 }}>Privacy Policy</Link>
-        <p style={{ color: '#94a3b8', fontSize: '0.75rem', marginTop: '0.5rem' }}>&copy; 2026 ReviewFlow Inc.</p>
+        <div style={{ display: 'flex', gap: '1.5rem', justifyContent: 'center', marginBottom: '0.5rem' }}>
+          <Link to="/privacy" style={{ color: '#64748b', textDecoration: 'none', fontSize: '0.875rem', fontWeight: 500 }}>Privacy</Link>
+          <Link to="/terms" style={{ color: '#64748b', textDecoration: 'none', fontSize: '0.875rem', fontWeight: 500 }}>Terms</Link>
+          <Link to="/data-deletion" style={{ color: '#64748b', textDecoration: 'none', fontSize: '0.875rem', fontWeight: 500 }}>Data Deletion</Link>
+        </div>
+        <p style={{ color: '#94a3b8', fontSize: '0.75rem' }}>&copy; 2026 ReviewFlow Inc.</p>
       </footer>
     </div>
   );

@@ -277,7 +277,8 @@ export default function Home() {
                         <h4>Company</h4>
                         <a href="#">About</a>
                         <Link to="/privacy">Privacy</Link>
-                        <a href="#">Terms</a>
+                        <Link to="/terms">Terms</Link>
+                        <Link to="/data-deletion">Data Deletion</Link>
                     </div>
                 </div>
                 <div className="home-footer-bottom">
