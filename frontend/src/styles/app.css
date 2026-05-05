@@ -866,6 +866,30 @@ textarea {
   border: 2px solid #e0e7ff;
 }
 
+.download-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 22px;
+  border-radius: 999px;
+  border: 2px solid #6d28d9;
+  background: transparent;
+  color: #6d28d9;
+  font-weight: 700;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.22s ease;
+}
+
+.download-button:hover {
+  background: linear-gradient(135deg, #7c3aed, #6366f1);
+  border-color: transparent;
+  color: #fff;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 18px rgba(99, 102, 241, 0.35);
+}
+
+
 .photo-error {
   font-size: 14px;
   margin-top: 6px;

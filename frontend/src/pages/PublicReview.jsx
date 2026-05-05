@@ -1,10 +1,31 @@
 import { useEffect, useState, useRef } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { RefreshCw, Send, Camera, X, Sparkles } from "lucide-react";
+import { RefreshCw, Send, Camera, Sparkles, Download } from "lucide-react";
 import { publicApi } from "../lib/api";
 import { copyToClipboard } from "../lib/clipboard";
 import StarRating from "../components/StarRating.jsx";
 
+// localStorage key for storing photo data per slug
+function photoStorageKey(slug) {
+  return `review-photo-${slug}`;
+}
+
+function savePhotoToStorage(slug, data) {
+  try {
+    localStorage.setItem(photoStorageKey(slug), JSON.stringify(data));
+  } catch (e) {
+    // ignore quota errors
+  }
+}
+
+function loadPhotoFromStorage(slug) {
+  try {
+    const raw = localStorage.getItem(photoStorageKey(slug));
+    return raw ? JSON.parse(raw) : null;
+  } catch {
+    return null;
+  }
+}
 
 export default function PublicReview() {
   const { slug } = useParams();
@@ -16,17 +37,26 @@ export default function PublicReview() {
   const [error, setError] = useState("");
 
   // Photo states
-  const [photoFile, setPhotoFile] = useState(null);
-  const [photoPreview, setPhotoPreview] = useState(null);
+  const [photoPreview, setPhotoPreview] = useState(null); // base64 for persistence
   const [enhancedImage, setEnhancedImage] = useState(null);
   const [photoLoading, setPhotoLoading] = useState(false);
   const [photoError, setPhotoError] = useState("");
   const fileInputRef = useRef(null);
 
+  // Load business
   useEffect(() => {
     publicApi(`/api/review/${slug}`)
       .then((payload) => setBusiness(payload.business))
       .catch((err) => setError(err.message));
+  }, [slug]);
+
+  // Restore saved photos from localStorage on mount
+  useEffect(() => {
+    const saved = loadPhotoFromStorage(slug);
+    if (saved?.enhancedImage) {
+      setEnhancedImage(saved.enhancedImage);
+      if (saved.photoPreview) setPhotoPreview(saved.photoPreview);
+    }
   }, [slug]);
 
   async function generate(stars) {
@@ -46,27 +76,32 @@ export default function PublicReview() {
     }
   }
 
-  function handlePhotoSelect(e) {
+  // Convert file to base64 for persistent storage
+  function fileToBase64(file) {
+    return new Promise((resolve) => {
+      const reader = new FileReader();
+      reader.onload = (e) => resolve(e.target.result);
+      reader.readAsDataURL(file);
+    });
+  }
+
+  async function handlePhotoSelect(e) {
     const file = e.target.files?.[0];
     if (!file) return;
-    setPhotoFile(file);
-    setPhotoPreview(URL.createObjectURL(file));
+
+    // Convert to base64 so it can be stored in localStorage
+    const base64 = await fileToBase64(file);
+    setPhotoPreview(base64);
     setEnhancedImage(null);
     setPhotoError("");
-    uploadPhoto(file); // Trigger instantly
+
+    // Persist original immediately
+    savePhotoToStorage(slug, { photoPreview: base64, enhancedImage: null });
+
+    uploadPhoto(file, base64);
   }
 
-  function removePhoto() {
-    setPhotoFile(null);
-    if (photoPreview) URL.revokeObjectURL(photoPreview);
-    setPhotoPreview(null);
-    setEnhancedImage(null);
-    setPhotoError("");
-    if (fileInputRef.current) fileInputRef.current.value = "";
-  }
-
-  async function uploadPhoto(fileToUpload) {
-    const file = fileToUpload || photoFile;
+  async function uploadPhoto(file, base64Preview) {
     if (!file) return;
     setPhotoLoading(true);
     setPhotoError("");
@@ -75,12 +110,10 @@ export default function PublicReview() {
       const formData = new FormData();
       formData.append("photo", file);
 
-      // Using the backend proxy instead of hitting the webhook directly to avoid CORS 
-      // and to safely upload the photo to Cloudinary first
-      const response = await fetch(`${import.meta.env.VITE_API_BASE_URL || ""}/api/review/${slug}/enhance-photo`, {
-        method: "POST",
-        body: formData,
-      });
+      const response = await fetch(
+        `${import.meta.env.VITE_API_BASE_URL || ""}/api/review/${slug}/enhance-photo`,
+        { method: "POST", body: formData }
+      );
 
       if (!response.ok) {
         const errText = await response.text();
@@ -88,9 +121,15 @@ export default function PublicReview() {
       }
 
       const initData = await response.json();
+
+      // No job ID — immediate result (no KIE key or fallback)
       if (!initData.jobId) {
         if (initData.imageUrl) {
           setEnhancedImage(initData.imageUrl);
+          savePhotoToStorage(slug, {
+            photoPreview: base64Preview,
+            enhancedImage: initData.imageUrl,
+          });
           setPhotoLoading(false);
           return;
         }
@@ -100,18 +139,25 @@ export default function PublicReview() {
       const jobId = initData.jobId;
       setPhotoError("AI is generating your image... This may take a few minutes.");
 
-      // Start Polling
+      // Poll for completion
       const pollInterval = setInterval(async () => {
         try {
-          const pollRes = await fetch(`${import.meta.env.VITE_API_BASE_URL || ""}/api/review/photo-job/${jobId}`);
+          const pollRes = await fetch(
+            `${import.meta.env.VITE_API_BASE_URL || ""}/api/review/photo-job/${jobId}`
+          );
           if (!pollRes.ok) return;
-          
+
           const jobData = await pollRes.json();
           if (jobData.status === "completed" && jobData.enhancedImageUrl) {
             clearInterval(pollInterval);
             setEnhancedImage(jobData.enhancedImageUrl);
             setPhotoError("");
             setPhotoLoading(false);
+            // Persist both original and enhanced permanently
+            savePhotoToStorage(slug, {
+              photoPreview: base64Preview,
+              enhancedImage: jobData.enhancedImageUrl,
+            });
           } else if (jobData.status === "failed") {
             clearInterval(pollInterval);
             setPhotoError("AI image generation failed.");
@@ -122,8 +168,7 @@ export default function PublicReview() {
         }
       }, 5000);
 
-      // Keep photoLoading true until interval clears
-      return; // prevent the finally block from setting photoLoading to false immediately
+      return; // keep photoLoading true until poll resolves
 
     } catch (err) {
       setPhotoError(err.message || "Failed to enhance photo");
@@ -131,26 +176,76 @@ export default function PublicReview() {
     }
   }
 
+  // Download the enhanced image
+  async function downloadEnhancedImage() {
+    if (!enhancedImage) return;
+    try {
+      const response = await fetch(enhancedImage);
+      const blob = await response.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `enhanced-cake-${slug}.jpg`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    } catch {
+      // fallback: open in new tab
+      window.open(enhancedImage, "_blank");
+    }
+  }
+
   async function postReview() {
     const copied = await copyToClipboard(reviewText);
     sessionStorage.setItem(
       "review-handoff",
-      JSON.stringify({ reviewText, copied, googleReviewUrl: business.googleReviewUrl, businessName: business.name, color: business.branding.primaryColor })
+      JSON.stringify({
+        reviewText,
+        copied,
+        googleReviewUrl: business.googleReviewUrl,
+        businessName: business.name,
+        color: business.branding.primaryColor,
+      })
     );
     navigate(`/review/${slug}/thank-you`);
   }
 
-  if (error && !business) return <main className="public-page"><div className="public-card"><p className="error">{error}</p></div></main>;
-  if (!business) return <main className="public-page"><div className="public-card"><div className="skeleton tall" /></div></main>;
+  if (error && !business)
+    return (
+      <main className="public-page">
+        <div className="public-card">
+          <p className="error">{error}</p>
+        </div>
+      </main>
+    );
+  if (!business)
+    return (
+      <main className="public-page">
+        <div className="public-card">
+          <div className="skeleton tall" />
+        </div>
+      </main>
+    );
 
   return (
     <main className="public-page" style={{ "--brand": business.branding.primaryColor }}>
       <section className="public-card">
-        {business.branding.logoDataUrl ? <img className="public-logo" src={business.branding.logoDataUrl} alt={`${business.name} logo`} /> : <div className="public-logo text-logo">{business.name[0]}</div>}
+        {business.branding.logoDataUrl ? (
+          <img className="public-logo" src={business.branding.logoDataUrl} alt={`${business.name} logo`} />
+        ) : (
+          <div className="public-logo text-logo">{business.name[0]}</div>
+        )}
         <h1>How was your experience at {business.name}?</h1>
         <p className="muted">Pick a rating and we will draft a natural review you can paste on Google.</p>
         <StarRating value={rating} onChange={generate} disabled={loading} />
-        {loading && <div className="review-card"><div className="skeleton" /><div className="skeleton short" /><div className="skeleton" /></div>}
+        {loading && (
+          <div className="review-card">
+            <div className="skeleton" />
+            <div className="skeleton short" />
+            <div className="skeleton" />
+          </div>
+        )}
 
         {/* Photo Upload Section — visible as soon as stars are picked */}
         {rating > 0 && (
@@ -164,6 +259,7 @@ export default function PublicReview() {
               id="photo-input"
             />
 
+            {/* Upload trigger — only show if no photo at all yet */}
             {!photoPreview && !enhancedImage && (
               <label htmlFor="photo-input" className="photo-upload-trigger">
                 <Camera size={22} />
@@ -172,15 +268,11 @@ export default function PublicReview() {
               </label>
             )}
 
+            {/* Original preview while AI is working */}
             {photoPreview && !enhancedImage && (
               <div className="photo-preview-container">
                 <div className="photo-preview-wrapper">
                   <img src={photoPreview} alt="Selected" className="photo-preview-img" />
-                  {!photoLoading && (
-                    <button className="photo-remove-btn" onClick={removePhoto} aria-label="Remove photo">
-                      <X size={16} />
-                    </button>
-                  )}
                 </div>
 
                 {photoLoading && (
@@ -200,11 +292,15 @@ export default function PublicReview() {
               </div>
             )}
 
+            {/* Enhanced result with Download button */}
             {enhancedImage && (
               <div className="enhanced-result">
                 <div className="enhanced-badge"><Sparkles size={14} /> AI Enhanced</div>
                 <img src={enhancedImage} alt="AI Enhanced" className="enhanced-img" />
-                <button className="link-button" onClick={removePhoto}>Remove photo</button>
+                <button className="download-button" onClick={downloadEnhancedImage} id="download-enhanced-photo">
+                  <Download size={16} />
+                  Download Photo
+                </button>
               </div>
             )}
 
@@ -215,8 +311,12 @@ export default function PublicReview() {
         {reviewText && !loading && (
           <>
             <article className="review-card">{reviewText}</article>
-            <button className="secondary-button full" onClick={() => generate(rating)}><RefreshCw size={18} /> Generate a different review</button>
-            <button className="google-button" onClick={postReview}><Send size={20} /> Post This Review on Google</button>
+            <button className="secondary-button full" onClick={() => generate(rating)}>
+              <RefreshCw size={18} /> Generate a different review
+            </button>
+            <button className="google-button" onClick={postReview}>
+              <Send size={20} /> Post This Review on Google
+            </button>
           </>
         )}
         {error && <p className="error">{error}</p>}
