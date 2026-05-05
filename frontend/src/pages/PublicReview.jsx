@@ -182,7 +182,7 @@ export default function PublicReview() {
             });
           } else if (jobData.status === "failed") {
             clearInterval(pollInterval);
-            setPhotoError("AI image generation failed.");
+            setPhotoError(jobData.errorMessage || "AI image generation failed.");
             setPhotoLoading(false);
           }
         } catch (pollErr) {

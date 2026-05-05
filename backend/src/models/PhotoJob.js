@@ -17,6 +17,9 @@ const photoJobSchema = new mongoose.Schema(
     kieTaskId: {
       type: String,
     },
+    errorMessage: {
+      type: String,
+    },
   },
   { timestamps: true }
 );

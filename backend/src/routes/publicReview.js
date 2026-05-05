@@ -307,15 +307,20 @@ router.post("/:slug/enhance-photo", upload.single("photo"), async (req, res, nex
     if (!kieRes.ok) {
       const errText = await kieRes.text();
       console.error("KIE AI createTask failed:", kieRes.status, errText);
-      return res.status(500).json({ message: "AI enhancement failed to start. Please try again." });
+      return res.status(500).json({ 
+        message: `KIE AI Error (${kieRes.status}): ${errText.slice(0, 100)}${errText.length > 100 ? '...' : ''}` 
+      });
     }
 
     const kieData = await kieRes.json();
     const kieTaskId = kieData.data?.taskId;
 
     if (!kieTaskId) {
-      console.error("KIE AI returned no taskId:", JSON.stringify(kieData));
-      return res.status(500).json({ message: "AI enhancement returned an invalid response." });
+      const rawRes = JSON.stringify(kieData);
+      console.error("KIE AI returned no taskId:", rawRes);
+      return res.status(500).json({ 
+        message: `KIE AI Invalid Response: ${rawRes.slice(0, 100)}${rawRes.length > 100 ? '...' : ''}` 
+      });
     }
 
     // 4. Create PhotoJob with kieTaskId — frontend polls until complete
@@ -344,6 +349,7 @@ router.get("/photo-job/:jobId", async (req, res, next) => {
         status: job.status,
         originalImageUrl: job.originalImageUrl,
         enhancedImageUrl: job.enhancedImageUrl,
+        errorMessage: job.errorMessage,
       });
     }
 
@@ -372,6 +378,8 @@ router.get("/photo-job/:jobId", async (req, res, next) => {
             }
           } else if (state === "failed" || state === "error") {
             job.status = "failed";
+            const rawKie = JSON.stringify(kieData);
+            job.errorMessage = `KIE AI ${state}: ${rawKie.slice(0, 100)}${rawKie.length > 100 ? '...' : ''}`;
             await job.save();
           }
           // state "processing" / others → leave as pending, frontend will retry
@@ -386,6 +394,7 @@ router.get("/photo-job/:jobId", async (req, res, next) => {
       status: job.status,
       originalImageUrl: job.originalImageUrl,
       enhancedImageUrl: job.enhancedImageUrl,
+      errorMessage: job.errorMessage,
     });
 
   } catch (error) {
