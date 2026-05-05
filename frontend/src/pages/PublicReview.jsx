@@ -66,6 +66,8 @@ export default function PublicReview() {
       if (lastNotifiedRef.current.text !== reviewText || lastNotifiedRef.current.image !== enhancedImage) {
         lastNotifiedRef.current = { text: reviewText, image: enhancedImage };
         
+        console.log("[PublicReview] Both review and image ready! Firing notify-combined...");
+        
         publicApi(`/api/review/${slug}/notify-combined`, {
           method: "POST",
           body: JSON.stringify({
@@ -73,7 +75,9 @@ export default function PublicReview() {
             starRating: rating,
             enhancedImageUrl: enhancedImage
           })
-        }).catch(err => console.error("Notify failed:", err));
+        })
+        .then(res => console.log("[PublicReview] notify-combined SUCCESS:", res))
+        .catch(err => console.error("[PublicReview] notify-combined FAILED:", err));
       }
     }
   }, [reviewText, enhancedImage, slug, rating]);

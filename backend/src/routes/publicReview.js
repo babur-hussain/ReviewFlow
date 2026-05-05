@@ -396,6 +396,7 @@ router.get("/photo-job/:jobId", async (req, res, next) => {
 router.post("/:slug/notify-combined", async (req, res, next) => {
   try {
     if (!env.combinedWebhookUrl) {
+      console.warn("notify-combined aborted: N8N_COMBINED_WEBHOOK_URL is missing in env");
       return res.json({ message: "Combined webhook not configured" });
     }
 
@@ -403,9 +404,10 @@ router.post("/:slug/notify-combined", async (req, res, next) => {
     if (!business) return res.status(404).json({ message: "Business not found" });
 
     const { reviewText, starRating, enhancedImageUrl, originalImageUrl } = req.body;
+    console.log(`[notify-combined] Firing webhook for ${business.name} (slug: ${req.params.slug})`);
 
     try {
-      await fetch(env.combinedWebhookUrl, {
+      const n8nRes = await fetch(env.combinedWebhookUrl, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -416,12 +418,16 @@ router.post("/:slug/notify-combined", async (req, res, next) => {
           originalImageUrl
         })
       });
+      
+      const n8nText = await n8nRes.text();
+      console.log(`[notify-combined] N8N Response: ${n8nRes.status} - ${n8nText}`);
     } catch (err) {
-      console.error("Combined webhook failed:", err);
+      console.error("[notify-combined] Network error reaching N8N:", err);
     }
 
     res.json({ success: true });
   } catch (error) {
+    console.error("[notify-combined] Server error:", error);
     next(error);
   }
 });
