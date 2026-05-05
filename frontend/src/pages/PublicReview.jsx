@@ -139,24 +139,23 @@ export default function PublicReview() {
       );
 
       if (!response.ok) {
-        const errText = await response.text();
-        throw new Error(errText || "Failed to enhance photo");
+        let errMsg = "Failed to enhance photo";
+        try {
+          // Try to parse the clean JSON error from our updated backend
+          const errData = await response.clone().json();
+          if (errData.message) errMsg = errData.message;
+        } catch {
+          // Fallback to text if it's an HTML error from Express
+          const errText = await response.text();
+          if (errText && errText.length < 200) errMsg = errText;
+        }
+        throw new Error(errMsg);
       }
 
       const initData = await response.json();
 
-      // No job ID — immediate result (no KIE key or fallback)
       if (!initData.jobId) {
-        if (initData.imageUrl) {
-          setEnhancedImage(initData.imageUrl);
-          savePhotoToStorage(slug, {
-            photoPreview: base64Preview,
-            enhancedImage: initData.imageUrl,
-          });
-          setPhotoLoading(false);
-          return;
-        }
-        throw new Error("No job ID returned from server");
+        throw new Error("No job ID returned from server. AI service may be unavailable.");
       }
 
       const jobId = initData.jobId;

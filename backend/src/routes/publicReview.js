@@ -277,8 +277,8 @@ router.post("/:slug/enhance-photo", upload.single("photo"), async (req, res, nex
     const photoUrl = cldRes.secure_url;
 
     if (!env.kieApiKey) {
-      // No KIE key configured — return original Cloudinary URL directly
-      return res.json({ imageUrl: photoUrl });
+      console.error("KIE API Key is missing");
+      return res.status(500).json({ message: "AI enhancement is currently unavailable." });
     }
 
     // 2. Convert Cloudinary URL to JPG (required by KIE AI)
@@ -301,13 +301,13 @@ router.post("/:slug/enhance-photo", upload.single("photo"), async (req, res, nex
           aspect_ratio: "1:1",
         },
       }),
+      signal: AbortSignal.timeout(15000),
     });
 
     if (!kieRes.ok) {
       const errText = await kieRes.text();
       console.error("KIE AI createTask failed:", kieRes.status, errText);
-      // Fallback: return original Cloudinary image so the user still sees something
-      return res.json({ imageUrl: photoUrl });
+      return res.status(500).json({ message: "AI enhancement failed to start. Please try again." });
     }
 
     const kieData = await kieRes.json();
@@ -315,7 +315,7 @@ router.post("/:slug/enhance-photo", upload.single("photo"), async (req, res, nex
 
     if (!kieTaskId) {
       console.error("KIE AI returned no taskId:", JSON.stringify(kieData));
-      return res.json({ imageUrl: photoUrl });
+      return res.status(500).json({ message: "AI enhancement returned an invalid response." });
     }
 
     // 4. Create PhotoJob with kieTaskId — frontend polls until complete

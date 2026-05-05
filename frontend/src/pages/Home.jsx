@@ -1,43 +1,78 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
+import { motion, useScroll, useTransform } from "framer-motion";
 import {
     Star,
     ArrowRight,
     Zap,
     Shield,
     BarChart3,
-    CheckCircle2,
+    QrCode,
     Users,
-    MessageSquare,
-    QrCode
+    Sparkles,
+    Smartphone
 } from "lucide-react";
+import "../styles/home.css"; // Import our new premium styles
 
 export default function Home() {
     const { firebaseUser, loading } = useAuth();
     const navigate = useNavigate();
+    const { scrollYProgress } = useScroll();
+    const opacity = useTransform(scrollYProgress, [0, 0.2], [1, 0]);
+    const y = useTransform(scrollYProgress, [0, 0.2], [0, 100]);
+
+    const [scrolled, setScrolled] = useState(false);
+
+    useEffect(() => {
+        const handleScroll = () => {
+            setScrolled(window.scrollY > 50);
+        };
+        window.addEventListener("scroll", handleScroll);
+        return () => window.removeEventListener("scroll", handleScroll);
+    }, []);
+
+    // Animation variants
+    const fadeIn = {
+        hidden: { opacity: 0, y: 20 },
+        visible: { opacity: 1, y: 0, transition: { duration: 0.6 } }
+    };
+
+    const staggerContainer = {
+        hidden: { opacity: 0 },
+        visible: {
+            opacity: 1,
+            transition: { staggerChildren: 0.2 }
+        }
+    };
 
     return (
-        <div className="landing-page">
+        <div className="home-page-container">
+            {/* Background Effects */}
+            <div className="home-bg-glow">
+                <div className="glow-orb glow-orb-1"></div>
+                <div className="glow-orb glow-orb-2"></div>
+            </div>
+
             {/* Navigation */}
-            <nav className="nav-blur sticky-nav">
-                <div className="container nav-container">
-                    <div className="logo-group">
-                        <div className="logo-icon">
-                            <Star fill="currentColor" />
-                        </div>
-                        <span className="logo-text">ReviewFlow</span>
-                    </div>
-                    <div className="nav-actions">
+            <nav className={`home-nav ${scrolled ? 'scrolled' : ''}`}>
+                <div className="home-nav-container">
+                    <Link to="/" className="home-logo">
+                        <Star className="home-logo-icon" fill="currentColor" />
+                        <span>ReviewFlow</span>
+                    </Link>
+                    <div className="home-nav-actions">
                         {!loading && (
                             firebaseUser ? (
-                                <Link to="/dashboard" className="btn btn-primary btn-sm">
-                                    Go to Dashboard <ArrowRight size={16} />
+                                <Link to="/dashboard" className="home-btn home-btn-primary">
+                                    Dashboard <ArrowRight size={16} />
                                 </Link>
                             ) : (
                                 <>
-                                    <Link to="/login" className="nav-link">Sign In</Link>
-                                    <Link to="/login" className="btn btn-primary btn-sm">Get Started</Link>
+                                    <Link to="/login" className="home-link">Sign In</Link>
+                                    <Link to="/login" className="home-btn home-btn-primary">
+                                        Get Started
+                                    </Link>
                                 </>
                             )
                         )}
@@ -46,160 +81,195 @@ export default function Home() {
             </nav>
 
             {/* Hero Section */}
-            <section className="hero-section">
-                <div className="hero-background">
-                    <div className="blob blob-1"></div>
-                    <div className="blob blob-2"></div>
-                </div>
-                <div className="container hero-content">
-                    <div className="hero-badge">
-                        <span className="pulse-dot"></span>
-                        Powered by Claude 3.5 Sonnet
-                    </div>
-                    <h1 className="hero-title">
-                        Turn Every <span className="text-gradient">Review</span> <br />
+            <section className="home-hero">
+                <motion.div
+                    initial="hidden"
+                    animate="visible"
+                    variants={staggerContainer}
+                    style={{ opacity, y }}
+                >
+                    <motion.div variants={fadeIn} className="home-badge">
+                        <span className="home-badge-dot"></span>
+                        Powered by Next-Gen AI
+                    </motion.div>
+                    
+                    <motion.h1 variants={fadeIn} className="home-title">
+                        Turn Every <span className="home-text-gradient">Review</span> <br />
                         Into a Growth Engine
-                    </h1>
-                    <p className="hero-subtitle">
+                    </motion.h1>
+                    
+                    <motion.p variants={fadeIn} className="home-subtitle">
                         Collect local reviews effortlessly. Use AI to generate high-converting responses and display branded QR codes that customers actually want to scan.
-                    </p>
-                    <div className="hero-actions">
-                        <Link to="/login" className="btn btn-primary btn-lg">
-                            Start Free Trial <ArrowRight size={20} />
+                    </motion.p>
+                    
+                    <motion.div variants={fadeIn} className="home-hero-actions">
+                        <Link to="/login" className="home-btn home-btn-primary">
+                            Start Free Trial <ArrowRight size={18} />
                         </Link>
-                        <a href="#features" className="btn btn-outline btn-lg">
+                        <a href="#features" className="home-btn home-btn-outline">
                             Explore Features
                         </a>
-                    </div>
+                    </motion.div>
+                </motion.div>
 
-                    {/* Hero Preview */}
-                    <div className="hero-preview-container">
-                        <div className="preview-card glass">
-                            <div className="preview-header">
-                                <div className="preview-dots">
-                                    <span></span><span></span><span></span>
-                                </div>
-                                <div className="preview-url">reviewflow.ai/kapoor-sons</div>
+                {/* Hero Preview */}
+                <motion.div 
+                    className="home-preview-wrapper"
+                    initial={{ opacity: 0, y: 100, rotateX: 20 }}
+                    animate={{ opacity: 1, y: 0, rotateX: 0 }}
+                    transition={{ duration: 1, delay: 0.5, type: "spring" }}
+                >
+                    <div className="home-preview-card">
+                        <div className="home-preview-header">
+                            <div className="home-preview-dots">
+                                <span></span><span></span><span></span>
                             </div>
-                            <div className="preview-body">
-                                <div className="preview-review">
-                                    <div className="preview-stars">
-                                        {[1, 2, 3, 4, 5].map(i => <Star key={i} size={14} fill="currentColor" className="text-warning" />)}
-                                    </div>
-                                    <div className="preview-skeleton-title"></div>
-                                    <div className="preview-skeleton-text"></div>
-                                    <div className="preview-skeleton-text short"></div>
-                                </div>
-                                <div className="preview-ai-badge">AI Assistant Generated</div>
+                            <div className="home-preview-url">reviewflow.ai/your-business</div>
+                        </div>
+                        <div className="home-preview-content">
+                            <div className="home-preview-stars">
+                                {[1, 2, 3, 4, 5].map(i => <Star key={i} size={24} fill="currentColor" />)}
+                            </div>
+                            <div style={{ height: '12px', width: '60%', background: '#3f3f46', borderRadius: '4px', marginTop: '1rem' }}></div>
+                            <div style={{ height: '8px', width: '80%', background: '#27272a', borderRadius: '4px' }}></div>
+                            <div style={{ height: '8px', width: '40%', background: '#27272a', borderRadius: '4px' }}></div>
+                            
+                            <div style={{ marginTop: '2rem', display: 'flex', alignItems: 'center', gap: '0.5rem', color: '#a855f7', fontSize: '0.875rem', fontWeight: 600 }}>
+                                <Sparkles size={16} /> AI Response Generated
                             </div>
                         </div>
                     </div>
-                </div>
+                </motion.div>
             </section>
 
             {/* Stats Section */}
-            <section className="stats-section">
-                <div className="container stats-grid">
-                    <div className="stat-item">
-                        <h3>88%</h3>
-                        <p>Trust online reviews as much as personal recommendations.</p>
-                    </div>
-                    <div className="stat-item border-x">
-                        <h3>4.2x</h3>
-                        <p>Higher conversion rates for businesses with detailed reviews.</p>
-                    </div>
-                    <div className="stat-item">
-                        <h3>2min</h3>
-                        <p>Set up your branded collection page in under two minutes.</p>
-                    </div>
-                </div>
+            <section className="home-stats">
+                <motion.div 
+                    className="home-stats-grid"
+                    initial="hidden"
+                    whileInView="visible"
+                    viewport={{ once: true, margin: "-100px" }}
+                    variants={staggerContainer}
+                >
+                    <motion.div variants={fadeIn}>
+                        <div className="home-stat-number">88%</div>
+                        <div className="home-stat-label">Trust online reviews as much as personal recommendations</div>
+                    </motion.div>
+                    <motion.div variants={fadeIn}>
+                        <div className="home-stat-number">4.2x</div>
+                        <div className="home-stat-label">Higher conversion rates for businesses with detailed reviews</div>
+                    </motion.div>
+                    <motion.div variants={fadeIn}>
+                        <div className="home-stat-number">2min</div>
+                        <div className="home-stat-label">To set up your branded collection page and QR codes</div>
+                    </motion.div>
+                </motion.div>
             </section>
 
             {/* Features Section */}
-            <section id="features" className="features-section">
-                <div className="container">
-                    <div className="section-header">
-                        <h2 className="section-title">Everything you need to <span className="text-gradient">succeed</span></h2>
-                        <p className="section-desc">Stop losing customers to bad reviews. Take control of your online reputation today.</p>
-                    </div>
+            <section id="features" className="home-features">
+                <motion.div 
+                    initial="hidden"
+                    whileInView="visible"
+                    viewport={{ once: true }}
+                    variants={fadeIn}
+                >
+                    <h2 className="home-section-title">Everything you need to <span className="home-text-gradient">dominate</span></h2>
+                    <p className="home-section-subtitle">Stop losing customers to bad reviews. Take control of your online reputation with our suite of powerful tools.</p>
+                </motion.div>
 
-                    <div className="features-grid">
-                        <div className="feature-card glass-hover">
-                            <div className="feature-icon bg-soft-blue">
-                                <Zap size={24} />
-                            </div>
-                            <h3>AI Review Assistant</h3>
-                            <p>Generate personalized, high-quality reviews for your customers using state-of-the-art AI. No more writer's block.</p>
-                        </div>
+                <div className="bento-grid">
+                    <motion.div 
+                        className="bento-card bento-wide"
+                        initial={{ opacity: 0, x: -50 }}
+                        whileInView={{ opacity: 1, x: 0 }}
+                        viewport={{ once: true }}
+                        transition={{ duration: 0.6 }}
+                    >
+                        <div className="bento-icon icon-purple"><Zap /></div>
+                        <h3>AI Review Assistant</h3>
+                        <p>Generate personalized, high-quality review responses using state-of-the-art AI. Turn negative feedback into positive opportunities and save hours of manual typing.</p>
+                    </motion.div>
 
-                        <div className="feature-card glass-hover">
-                            <div className="feature-icon bg-soft-purple">
-                                <QrCode size={24} />
-                            </div>
-                            <h3>Branded QR Codes</h3>
-                            <p>Display custom, high-resolution QR codes at your place of business. Scan, review, and grow instantly.</p>
-                        </div>
+                    <motion.div 
+                        className="bento-card bento-square"
+                        initial={{ opacity: 0, x: 50 }}
+                        whileInView={{ opacity: 1, x: 0 }}
+                        viewport={{ once: true }}
+                        transition={{ duration: 0.6, delay: 0.2 }}
+                    >
+                        <div className="bento-icon icon-blue"><QrCode /></div>
+                        <h3>Branded QR Codes</h3>
+                        <p>Display custom, high-resolution QR codes. Scan, review, and grow instantly.</p>
+                    </motion.div>
 
-                        <div className="feature-card glass-hover">
-                            <div className="feature-icon bg-soft-green">
-                                <BarChart3 size={24} />
-                            </div>
-                            <h3>Advanced Analytics</h3>
-                            <p>Track your growth, monitor review trends, and understand your customers via our intuitive dashboard.</p>
-                        </div>
+                    <motion.div 
+                        className="bento-card bento-square"
+                        initial={{ opacity: 0, y: 50 }}
+                        whileInView={{ opacity: 1, y: 0 }}
+                        viewport={{ once: true }}
+                        transition={{ duration: 0.6, delay: 0.3 }}
+                    >
+                        <div className="bento-icon icon-green"><BarChart3 /></div>
+                        <h3>Advanced Analytics</h3>
+                        <p>Track your growth, monitor review trends, and understand your customers.</p>
+                    </motion.div>
 
-                        <div className="feature-card glass-hover">
-                            <div className="feature-icon bg-soft-orange">
-                                <Shield size={24} />
-                            </div>
-                            <h3>Brand Security</h3>
-                            <p>Manage multiple locations from a single dashboard. Keep your brand voice consistent everywhere.</p>
-                        </div>
-                    </div>
+                    <motion.div 
+                        className="bento-card bento-wide"
+                        initial={{ opacity: 0, y: 50 }}
+                        whileInView={{ opacity: 1, y: 0 }}
+                        viewport={{ once: true }}
+                        transition={{ duration: 0.6, delay: 0.4 }}
+                    >
+                        <div className="bento-icon icon-pink"><Shield /></div>
+                        <h3>Brand Security & Multi-Location</h3>
+                        <p>Manage multiple locations from a single dashboard. Keep your brand voice consistent everywhere while empowering local managers to handle their own customer interactions.</p>
+                    </motion.div>
                 </div>
             </section>
 
             {/* CTA Section */}
-            <section className="cta-section">
-                <div className="container cta-container glass">
-                    <div className="cta-content">
-                        <h2>Ready to skyrocket your brand?</h2>
-                        <p>Join hundreds of local businesses using ReviewFlow to dominate their local search results.</p>
-                        <Link to="/login" className="btn btn-primary btn-lg">
-                            Get Started Now <ArrowRight size={20} />
-                        </Link>
-                    </div>
-                    <div className="cta-image">
-                        <div className="cta-blob"></div>
-                        <Users size={64} className="cta-icon" />
-                    </div>
-                </div>
+            <section className="home-cta">
+                <motion.div 
+                    className="home-cta-inner"
+                    initial={{ opacity: 0, scale: 0.9 }}
+                    whileInView={{ opacity: 1, scale: 1 }}
+                    viewport={{ once: true }}
+                    transition={{ duration: 0.8 }}
+                >
+                    <h2>Ready to skyrocket your brand?</h2>
+                    <p>Join hundreds of local businesses using ReviewFlow to dominate their local search results.</p>
+                    <Link to="/login" className="home-btn home-btn-primary" style={{ padding: '1rem 2rem', fontSize: '1.1rem' }}>
+                        Get Started Now <ArrowRight size={20} />
+                    </Link>
+                </motion.div>
             </section>
 
             {/* Footer */}
-            <footer className="footer">
-                <div className="container footer-grid">
-                    <div className="footer-brand">
-                        <div className="logo-group">
-                            <Star fill="currentColor" size={20} />
-                            <span className="logo-text">ReviewFlow</span>
-                        </div>
-                        <p>Better reviews. Faster growth.</p>
+            <footer className="home-footer">
+                <div className="home-footer-grid">
+                    <div className="home-footer-brand">
+                        <Link to="/" className="home-logo">
+                            <Star className="home-logo-icon" fill="currentColor" />
+                            <span>ReviewFlow</span>
+                        </Link>
+                        <p>Better reviews. Faster growth. The modern way to manage your local business reputation.</p>
                     </div>
-                    <div className="footer-links">
+                    <div className="home-footer-links">
                         <h4>Product</h4>
                         <Link to="/login">Login</Link>
                         <Link to="/login">Register</Link>
                         <a href="#features">Features</a>
                     </div>
-                    <div className="footer-links">
+                    <div className="home-footer-links">
                         <h4>Company</h4>
                         <a href="#">About</a>
                         <a href="#">Privacy</a>
                         <a href="#">Terms</a>
                     </div>
                 </div>
-                <div className="container footer-bottom">
+                <div className="home-footer-bottom">
                     <p>&copy; 2026 ReviewFlow Inc. All rights reserved.</p>
                 </div>
             </footer>
