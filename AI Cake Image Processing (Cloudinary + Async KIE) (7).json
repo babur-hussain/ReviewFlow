@@ -1,0 +1,710 @@
+{
+  "name": "AI Cake Image Processing (Cloudinary + Async KIE)",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "cake-upload",
+        "responseMode": "lastNode",
+        "options": {}
+      },
+      "id": "74c391e1-a5ff-461f-bae0-0493f747f101",
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        -704,
+        1152
+      ],
+      "webhookId": "519b9429-4226-4be7-9acb-294d5c19b7d2"
+    },
+    {
+      "parameters": {
+        "jsCode": "return [{\n  json: {\n    prompt: `You are an elite, world-class food photography AI specialized in luxury cake imagery for premium bakery brands.\n\nYour mission is to generate ultra-high-end, hyper-realistic cake images for a premium Indian bakery brand \"Celebration Point, Betul\", ensuring the output looks like a ₹10,000+ professional photoshoot.\n\n-----------------------------------\n🎯 BRAND CONTEXT (MANDATORY)\n-----------------------------------\n- Brand: Celebration Point (premium bakery)\n- Location: Betul, Madhya Pradesh, India\n- Positioning: Premium, high-quality, celebration-focused cakes\n- USP: Custom cakes, photo cakes, wedding cakes, rich flavors, elegant presentation\n- Emotional Tone: Celebration, happiness, luxury, indulgence, trust\n\nEvery image MUST feel:\n→ premium\n→ irresistible\n→ Instagram-worthy\n→ Google-review perfect\n→ conversion-focused\n\n-----------------------------------\n📸 PHOTOGRAPHY STYLE (VERY IMPORTANT)\n-----------------------------------\n- Style: Ultra-realistic commercial food photography\n- Camera: Full-frame DSLR / Sony A7R V / Canon R5 simulation\n- Lens: 85mm / 50mm f1.4\n- Depth of field: shallow, creamy bokeh\n- Focus: razor-sharp on cake details\n- Lighting:\n  → soft diffused studio lighting\n  → natural window light effect\n  → subtle rim lighting for highlights\n  → cinematic shadows\n- Color grading:\n  → rich, vibrant but natural\n  → warm premium tones\n  → no over-saturation\n\n-----------------------------------\n🎂 CAKE ENHANCEMENT RULES\n-----------------------------------\n- Preserve original cake design (if input image provided)\n- Improve:\n  → frosting smoothness\n  → texture sharpness\n  → shine and highlights\n- Enhance toppings:\n  → pistachios, saffron, chocolate, fruits should look premium\n- Add subtle luxury elements:\n  → edible gold flakes\n  → glossy glaze highlights\n  → fine texture detailing\n\n-----------------------------------\n🏆 COMPOSITION RULES\n-----------------------------------\n- Clean minimal background OR luxury cafe background\n- Options:\n  → marble table\n  → wooden rustic table\n  → soft blurred greenery\n  → elegant bakery interior blur\n- Avoid clutter\n- Maintain center focus on cake\n- Add depth using foreground blur if needed\n\n-----------------------------------\n✨ GOOGLE REVIEW OPTIMIZATION\n-----------------------------------\nImage must:\n- Look authentic (NOT AI-looking)\n- Be highly appetizing\n- Make viewer WANT TO ORDER immediately\n- Be suitable for:\n  → Google reviews\n  → Instagram posts\n  → ads\n\n-----------------------------------\n🎨 DETAIL LEVEL (CRITICAL)\n-----------------------------------\n- Micro details:\n  → cream texture lines visible\n  → nut fragments crisp\n  → moisture/gloss on surface\n- Real shadows and reflections\n- No plastic/artificial look\n\n-----------------------------------\n🚫 STRICTLY AVOID\n-----------------------------------\n- Cartoonish rendering\n- Over-editing\n- Unreal colors\n- Fake textures\n- Blurry or low-detail outputs\n- Overcrowded backgrounds\n\n-----------------------------------\n💎 FINAL OUTPUT QUALITY\n-----------------------------------\n- 8K resolution feel\n- Photorealistic\n- Studio-grade finish\n- Looks like shot by top food photographer\n\n-----------------------------------\n🧠 INTELLIGENCE MODE\n-----------------------------------\nIf input image is provided:\n→ regenerate same cake with massive quality upgrade\n\nIf no input:\n→ design premium cake based on Indian celebrations\n\n-----------------------------------\n🎯 GOAL\n-----------------------------------\nCreate the BEST cake image possible — better than top bakery brands, better than Zomato/Swiggy listings, and capable of making Celebration Point the #1 bakery in Betul visually.\n\nUltra-realistic premium cake photography, luxury Indian bakery style, Celebration Point Betul branding, cinematic lighting, shallow depth of field, 85mm lens, hyper-detailed frosting, edible gold accents, pistachio saffron toppings, marble surface, soft blurred background, commercial food photography, 8k quality, high-end studio shoot, natural shadows, glossy highlights, ultra appetizing, Instagram viral style`,\n    \n    image_url: $json.body.image_url\n  }\n}];"
+      },
+      "id": "d3f5098f-ac50-4f0c-9b8d-2e5c5aa91f41",
+      "name": "Prepare Input",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -512,
+        1152
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const prompt = $input.first().json.prompt;\nconst imageUrl = $('Webhook').first().json.body.url;\n\nreturn [{\n  json: {\n    kieBody: JSON.stringify({\n      model: \"gpt-image-2-image-to-image\",\n      input: {\n        prompt: prompt,\n        input_urls: [imageUrl.replace('/upload/', '/upload/f_jpg,q_90/').replace(/\\.[^.]+$/, '.jpg')],\n        aspect_ratio: \"1:1\"\n      }\n    })\n  }\n}];"
+      },
+      "id": "336e8965-3525-4da2-b2bc-991191d5cc65",
+      "name": "Build KIE Body",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -320,
+        1152
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.kie.ai/api/v1/jobs/createTask",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer 4a23aadf0192aeb373b9cec7d38137a1"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ $json.kieBody }}",
+        "options": {}
+      },
+      "id": "2660882f-a9f3-4078-be9e-444c947bc3d4",
+      "name": "Create KIE Task",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [
+        -112,
+        1152
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "return [{ json: { taskId: $json.data.taskId } }];"
+      },
+      "id": "c1f5f24d-c516-43f6-9833-19e819448acc",
+      "name": "Extract Task ID",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        96,
+        1152
+      ]
+    },
+    {
+      "parameters": {
+        "amount": 9,
+        "unit": "seconds"
+      },
+      "id": "d9fd5acb-d8bc-4525-a2a3-950f48ed6f3c",
+      "name": "Wait",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1,
+      "position": [
+        288,
+        1152
+      ],
+      "webhookId": "54aba8b2-01e6-4e29-a6c8-0a3bdbfdfeb2"
+    },
+    {
+      "parameters": {
+        "url": "={{`https://api.kie.ai/api/v1/jobs/recordInfo?taskId=${$json.taskId}`}}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer 4a23aadf0192aeb373b9cec7d38137a1"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "e88b4ee4-bac5-4b9d-81f9-4e17417f55fa",
+      "name": "Get Task Result",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [
+        496,
+        1152
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const data = $input.item.json.data;\nconst parsed = data.resultJson ? JSON.parse(data.resultJson) : {};\nconst imageUrl = parsed.resultUrls?.[0] || null;\nreturn [{\n  json: {\n    isReady: !!imageUrl,\n    enhanced_image_url: imageUrl\n  }\n}];"
+      },
+      "id": "709882ee-e06f-4792-a132-d081165671af",
+      "name": "Extract Result",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        880,
+        1008
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "96c4dc00-15f1-483e-a60c-b5432c2463a2",
+              "leftValue": "={{ $json.msg }}",
+              "rightValue": "success",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        704,
+        1152
+      ],
+      "id": "0bc7bc2d-9a18-49ce-b979-8b486c05b67e",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "additionalFields": {}
+      },
+      "type": "@mookielianhd/n8n-nodes-instagram.instagram",
+      "typeVersion": 1,
+      "position": [
+        3472,
+        1072
+      ],
+      "id": "9e9cca66-11aa-4bd7-a04e-a901d2b0728b",
+      "name": "Publish",
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.cloudinary.com/v1_1/dw0jk8jsz/image/upload",
+        "sendBody": true,
+        "contentType": "multipart-form-data",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "file",
+              "value": "={{ $json.enhanced_image_url }}"
+            },
+            {
+              "name": "=upload_preset",
+              "value": "n8n CP"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "4108744a-825a-452d-a5e7-773f84aa7077",
+      "name": "Upload to Cloudinary2",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [
+        1440,
+        1280
+      ]
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "a836e20e-3c4f-45a6-b4dc-05cc9e80f0cf",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        1328,
+        944
+      ],
+      "id": "d2cb66e3-eb41-441f-ab87-9ce309950826",
+      "name": "Webhook1",
+      "webhookId": "a836e20e-3c4f-45a6-b4dc-05cc9e80f0cf"
+    },
+    {
+      "parameters": {
+        "jsCode": "return [{\n  json: {\n    prompt: `You are an elite, world-class luxury visual designer, art director, and AI image compositor specializing in high-end food photography, premium branding, and Instagram marketing creatives.\n\nYour work must reflect the standards of top-tier luxury brands — visually rich, emotionally engaging, and commercially persuasive.\n\nYou are NOT a generic designer.\nYou create visuals that feel EXPENSIVE, TRUSTWORTHY, and SCROLL-STOPPING.\n\n-----------------------------------\n🎯 PRIMARY OBJECTIVE\n-----------------------------------\n\nTransform a provided high-resolution cake image into a luxury-grade Instagram review poster that:\n\n1. Showcases a real customer review (top section)\n2. Displays a visually dominant 5-star rating (bottom section)\n3. Reinforces premium brand identity\n4. Evokes celebration, happiness, and trust\n5. Looks like a high-budget professional advertisement\n\n-----------------------------------\n🖼️ INPUT (STRICT RULE)\n-----------------------------------\n\nYou will receive ONLY ONE input:\n\n2. REVIEW TEXT (${$('Webhook1').first().json.body.reviewText}):\n\nYou MUST:\n- Use this exact text (preserve meaning)\n- Format it beautifully for visual presentation\n\nYou MUST NOT:\n- Expect any other input\n- Ask for clarification\n- Skip formatting\n\n-----------------------------------\n🧠 FIXED BRAND CONTEXT (MANDATORY)\n-----------------------------------\n\nBrand Name: \"Celebration Point Betul\"\n\nBrand Identity:\n- Premium cake boutique\n- Elegant, artistic, high-quality creations\n- Emotional tone: celebration, love, happiness, trust\n\nTarget Feel:\n- Wedding-level luxury\n- Instagram premium aesthetic\n- “Worth every rupee” perception\n\n-----------------------------------\n🧱 OVERALL COMPOSITION ARCHITECTURE\n-----------------------------------\n\nThe image must follow a PERFECT vertical hierarchy:\n\n[ TOP — EMOTION ]\nCustomer Review Heading + Review Text\n\n[ CENTER — PRODUCT ]\nCake (hero subject)\n\n[ BOTTOM — TRUST PROOF ]\n5-Star Rating + Brand Name\n\nMaintain perfect visual balance.\nNothing should feel cramped or empty.\n\n-----------------------------------\n🔝 TOP SECTION — REVIEW PRESENTATION\n-----------------------------------\n\n1. HEADING (FIXED TEXT):\n\"Customer Review\"\n\nSTYLE:\n- Elegant script or luxury serif font\n- Slight gold or soft gradient tone\n- Subtle glow or shine\n- Large but refined (NOT overpowering)\n\n2. REVIEW TEXT ({{review_text}}):\n\nTEXT RULES:\n- Center aligned\n- Maximum 3–5 lines (auto-break intelligently)\n- Perfect line spacing (breathing room)\n- No harsh edges\n- No crowding\n\nFORMATTING LOGIC:\n- Break lines at natural emotional pauses\n- Keep phrases balanced visually\n- Maintain readability on mobile screens\n\nVISUAL ENHANCEMENTS:\n- Add soft translucent gradient overlay behind text (if needed)\n- Ensure contrast with background\n- Add subtle glow or shadow for clarity\n\nOPTIONAL MICRO DECOR:\n- Minimal hearts / sparkles (VERY subtle)\n- No clutter\n\n-----------------------------------\n🎂 CENTER SECTION — HERO CAKE\n-----------------------------------\n\n- The cake MUST remain the hero\n- DO NOT distort, crop aggressively, or replace\n\nENHANCEMENT RULES:\n- Improve sharpness slightly\n- Enhance colors naturally (no oversaturation)\n- Boost highlights subtly\n- Maintain realistic texture\n\nDEPTH:\n- Preserve background blur (bokeh)\n- Enhance light sources softly\n\nFOCUS:\n- Cake decorations (flowers, butterflies, pearls) should feel vivid and premium\n\n-----------------------------------\n⭐ BOTTOM SECTION — 5 STAR SYSTEM (CRITICAL CORE ELEMENT)\n-----------------------------------\n\nYou MUST create a luxury 5-star rating system with EXACT structure:\n\nTOTAL STARS: 5\n\nSTRUCTURE:\n\nLeft Side:\n- 2 smaller stars\n\nCenter:\n- 1 LARGE star (THE HERO STAR)\n\nRight Side:\n- 2 smaller stars\n\n-----------------------------------\n⭐ CENTER STAR (MOST IMPORTANT)\n-----------------------------------\n\n- Size: 1.4x to 1.6x larger than others\n- Brightness: Highest\n- Glow: Strong but soft-edged\n- Must immediately attract attention\n\nThis star represents TRUST and must dominate visually.\n\n-----------------------------------\n⭐ SIDE STARS (LEFT & RIGHT)\n-----------------------------------\n\n- Slightly smaller\n- Balanced brightness\n- Support the center star\n- Perfect symmetry\n\n-----------------------------------\n✨ STAR DESIGN STYLE\n-----------------------------------\n\n- Color: Rich gold gradient (#FFD700 → warm amber)\n- Finish: Glossy, 3D, slightly embossed\n- Lighting: Soft reflection highlights\n- Glow: Subtle golden aura\n- Effects: Tiny sparkles around stars\n\nARRANGEMENT:\n- Slight curved arc (premium feel)\n- NOT flat straight line\n\nDEPTH:\n- Soft shadow beneath stars\n- Slight floating appearance\n\n-----------------------------------\n🏷️ BRAND SECTION (BOTTOM)\n-----------------------------------\n\nDisplay:\n\n\"Celebration Point Betul\"\n\nSTYLE:\n- Elegant serif or premium script font\n- Gold / soft white tone\n- Clean and minimal\n- Center aligned\n\nENHANCEMENT:\n- Optional decorative divider line\n- Subtle glow or metallic shine\n\nPLACEMENT:\n- Below stars\n- Balanced spacing\n\n-----------------------------------\n💎 GLOBAL VISUAL STYLE (NON-NEGOTIABLE)\n-----------------------------------\n\nYou MUST maintain a luxury aesthetic at all times:\n\nCOLOR PALETTE:\n- Gold accents (luxury signal)\n- Soft pinks / creams / pastels\n- Warm highlights\n\nLIGHTING:\n- Cinematic lighting\n- Soft bloom effect\n- Warm glow tones\n\nBACKGROUND:\n- Soft bokeh\n- Optional light sparkles or festive glow\n- No clutter\n\n-----------------------------------\n✨ MICRO DETAILING (HIGH-END FINISH)\n-----------------------------------\n\n- Tiny sparkles near stars\n- Soft reflections on glossy elements\n- Depth shadows under text and stars\n- Gentle glow around key areas\n- Clean edge blending\n\nEverything should feel polished and premium.\n\n-----------------------------------\n🚫 STRICTLY FORBIDDEN\n-----------------------------------\n\n- Cheap fonts\n- Flat or dull stars\n- Overcrowded layout\n- Cartoonish design\n- Neon or harsh colors\n- Pixelation or blur on subject\n- Generic template feel\n\n-----------------------------------\n📱 OUTPUT REQUIREMENTS\n-----------------------------------\n\n- Format: Instagram optimized (1:1 or 4:5)\n- Resolution: 4K or ultra HD\n- Crisp, sharp, export-ready\n- Perfect brightness & contrast balance\n\n-----------------------------------\n🧪 FINAL QUALITY CHECK (MANDATORY)\n-----------------------------------\n\nBefore output, ensure:\n\n✔ Looks like a luxury advertisement\n✔ Review text is clean and readable\n✔ Center star is dominant focal point\n✔ Composition is balanced top to bottom\n✔ Emotional impact = trust + celebration\n✔ Image is scroll-stopping\n\n-----------------------------------\n🔥 STYLE KEYWORDS (FOR MODEL BEHAVIOR)\n-----------------------------------\n\nluxury cake photography, premium Instagram ad, cinematic lighting, golden glow, elegant typography, glossy 3D stars, high-end branding, soft bokeh, celebration aesthetic, photorealistic enhancement\n\n-----------------------------------\n⚠️ FINAL INSTRUCTION\n-----------------------------------\n\nOUTPUT ONLY THE FINAL IMAGE.\n\nDO NOT include explanations.\nDO NOT include text responses.\nDO NOT include metadata.\n\nONLY GENERATE THE IMAGE.\n-----------------------------------`,\n    \n    image_url: $json.secure_url\n  }\n}];"
+      },
+      "id": "de438ece-9baa-4a0f-b4f9-8092ac2b9219",
+      "name": "Prepare Input1",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2032,
+        1248
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const prompt = $input.first().json.prompt;\nconst imageUrl = $input.first().json.image_url;\nreturn [{\n  json: {\n    kieBody: JSON.stringify({\n      model: \"gpt-image-2-image-to-image\",\n      input: {\n        prompt: prompt,\n        input_urls: [imageUrl],\n        aspect_ratio: \"1:1\",\n        image_count: 1,\n        resolution: \"1K\"\n      }\n    })\n  }\n}];"
+      },
+      "id": "562d06d1-49cb-4586-aab8-e042eb55a865",
+      "name": "Build KIE Body1",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2256,
+        1232
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "return [{ json: { taskId: $json.data.taskId } }];"
+      },
+      "id": "7f48fa9e-5d57-433c-ae16-980110f9348c",
+      "name": "Extract Task ID1",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2656,
+        1040
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.kie.ai/api/v1/jobs/createTask",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer 4a23aadf0192aeb373b9cec7d38137a1"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ $json.kieBody }}",
+        "options": {}
+      },
+      "id": "6ef25473-939b-4efd-a8a2-901456bf7dd2",
+      "name": "Create KIE Task1",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [
+        2464,
+        848
+      ]
+    },
+    {
+      "parameters": {
+        "amount": 9,
+        "unit": "seconds"
+      },
+      "id": "e93a21f2-2561-4976-853f-ff5803016b62",
+      "name": "Wait1",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1,
+      "position": [
+        2528,
+        1280
+      ],
+      "webhookId": "54aba8b2-01e6-4e29-a6c8-0a3bdbfdfeb2"
+    },
+    {
+      "parameters": {
+        "url": "={{`https://api.kie.ai/api/v1/jobs/recordInfo?taskId=${$json.taskId}`}}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer 4a23aadf0192aeb373b9cec7d38137a1"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "5673298d-9264-430d-bfdd-21e1e4a28194",
+      "name": "Get Task Result1",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [
+        2736,
+        1280
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "96c4dc00-15f1-483e-a60c-b5432c2463a2",
+              "leftValue": "={{$json.data.state}}",
+              "rightValue": "success",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        2928,
+        1280
+      ],
+      "id": "f9ad0f7d-c23d-4d41-ba2a-9696bf9a1c67",
+      "name": "If1"
+    },
+    {
+      "parameters": {
+        "jsCode": "const data = $input.item.json.data;\n\nconst parsed = JSON.parse(data.resultJson);\nconst imageUrl = parsed.resultUrls?.[0] || null;\n\nreturn [{\n  json: {\n    isReady: !!imageUrl,\n    enhanced_image_url: imageUrl\n  }\n}];"
+      },
+      "id": "bf2c3a07-2ec0-409d-bc97-92bd0312a926",
+      "name": "Extract Result1",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        3168,
+        1264
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "53c71fa2-acf5-46ad-86b7-3d17174f7b02",
+              "leftValue": "={{ $json.body.starRating }}",
+              "rightValue": 5,
+              "operator": {
+                "type": "number",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        1520,
+        1088
+      ],
+      "id": "3a66e773-1d8a-47f7-8e1d-602922b67559",
+      "name": "If2"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://review-flow-7e7d.vercel.app/api/webhook/n8n-result",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"jobId\": \"{{ $('Webhook').item.json.body.jobId }}\",\n  \"enhancedImageUrl\": \"{{ $json.enhanced_image_url }}\"\n}\n",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        1152,
+        1520
+      ],
+      "id": "4bd25ea4-0c7e-4312-ae81-1f93f7b6d5a4",
+      "name": "HTTP Request"
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "combineBy": "combineByPosition",
+        "options": {
+          "includeUnpaired": true
+        }
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        1824,
+        1248
+      ],
+      "id": "575a3fb7-1244-4fb7-bff2-a51fa3f348bd",
+      "name": "Merge"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Prepare Input",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Input": {
+      "main": [
+        [
+          {
+            "node": "Build KIE Body",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build KIE Body": {
+      "main": [
+        [
+          {
+            "node": "Create KIE Task",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create KIE Task": {
+      "main": [
+        [
+          {
+            "node": "Extract Task ID",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract Task ID": {
+      "main": [
+        [
+          {
+            "node": "Wait",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait": {
+      "main": [
+        [
+          {
+            "node": "Get Task Result",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Task Result": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract Result": {
+      "main": [
+        [
+          {
+            "node": "Upload to Cloudinary2",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "Extract Result",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Wait",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Upload to Cloudinary2": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Prepare Input1": {
+      "main": [
+        [
+          {
+            "node": "Build KIE Body1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build KIE Body1": {
+      "main": [
+        [
+          {
+            "node": "Create KIE Task1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create KIE Task1": {
+      "main": [
+        [
+          {
+            "node": "Extract Task ID1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract Task ID1": {
+      "main": [
+        [
+          {
+            "node": "Wait1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait1": {
+      "main": [
+        [
+          {
+            "node": "Get Task Result1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Task Result1": {
+      "main": [
+        [
+          {
+            "node": "If1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If1": {
+      "main": [
+        [
+          {
+            "node": "Extract Result1",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Wait1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook1": {
+      "main": [
+        [
+          {
+            "node": "If2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If2": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge": {
+      "main": [
+        [
+          {
+            "node": "Prepare Input1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "83fd8f62-287e-4786-af18-194483d8592b",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "5e22139ce9aa191bdb4d3a736538f87a03be5ddbe995f650bd50ef5a31439687"
+  },
+  "id": "4mhot1TZ9rXtYLN5",
+  "tags": []
+}
