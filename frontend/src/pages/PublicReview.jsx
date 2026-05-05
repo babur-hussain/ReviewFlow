@@ -71,13 +71,12 @@ export default function PublicReview() {
           body: JSON.stringify({
             reviewText,
             starRating: rating,
-            enhancedImageUrl: enhancedImage,
-            originalImageUrl: photoPreview // Note: This sends base64, if webhook handles it, otherwise just enhanced
+            enhancedImageUrl: enhancedImage
           })
         }).catch(err => console.error("Notify failed:", err));
       }
     }
-  }, [reviewText, enhancedImage, slug, rating, photoPreview]);
+  }, [reviewText, enhancedImage, slug, rating]);
 
   async function generate(stars) {
     setRating(stars);
