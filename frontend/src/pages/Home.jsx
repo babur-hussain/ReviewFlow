@@ -9,11 +9,9 @@ import {
     Shield,
     BarChart3,
     QrCode,
-    Users,
-    Sparkles,
-    Smartphone
+    Sparkles
 } from "lucide-react";
-import "../styles/home.css"; // Import our new premium styles
+import "../styles/home.css";
 
 export default function Home() {
     const { firebaseUser, loading } = useAuth();
@@ -82,64 +80,77 @@ export default function Home() {
 
             {/* Hero Section */}
             <section className="home-hero">
-                <motion.div
-                    initial="hidden"
-                    animate="visible"
-                    variants={staggerContainer}
-                    style={{ opacity, y }}
-                >
-                    <motion.div variants={fadeIn} className="home-badge">
-                        <span className="home-badge-dot"></span>
-                        Powered by Next-Gen AI
+                <div className="home-hero-grid">
+                    <motion.div
+                        initial="hidden"
+                        animate="visible"
+                        variants={staggerContainer}
+                        style={{ opacity, y }}
+                    >
+                        <motion.div variants={fadeIn} className="home-badge">
+                            <span className="home-badge-dot"></span>
+                            Powered by Next-Gen AI
+                        </motion.div>
+                        
+                        <motion.h1 variants={fadeIn} className="home-title">
+                            Turn Every <span className="home-text-gradient">Review</span> <br />
+                            Into a Growth Engine
+                        </motion.h1>
+                        
+                        <motion.p variants={fadeIn} className="home-subtitle">
+                            Collect local reviews effortlessly. Use AI to generate high-converting responses and display branded QR codes that customers actually want to scan.
+                        </motion.p>
+                        
+                        <motion.div variants={fadeIn} className="home-hero-actions">
+                            <Link to="/login" className="home-btn home-btn-primary">
+                                Start Free Trial <ArrowRight size={18} />
+                            </Link>
+                            <a href="#features" className="home-btn home-btn-outline">
+                                Explore Features
+                            </a>
+                        </motion.div>
                     </motion.div>
-                    
-                    <motion.h1 variants={fadeIn} className="home-title">
-                        Turn Every <span className="home-text-gradient">Review</span> <br />
-                        Into a Growth Engine
-                    </motion.h1>
-                    
-                    <motion.p variants={fadeIn} className="home-subtitle">
-                        Collect local reviews effortlessly. Use AI to generate high-converting responses and display branded QR codes that customers actually want to scan.
-                    </motion.p>
-                    
-                    <motion.div variants={fadeIn} className="home-hero-actions">
-                        <Link to="/login" className="home-btn home-btn-primary">
-                            Start Free Trial <ArrowRight size={18} />
-                        </Link>
-                        <a href="#features" className="home-btn home-btn-outline">
-                            Explore Features
-                        </a>
-                    </motion.div>
-                </motion.div>
 
-                {/* Hero Preview */}
-                <motion.div 
-                    className="home-preview-wrapper"
-                    initial={{ opacity: 0, y: 100, rotateX: 20 }}
-                    animate={{ opacity: 1, y: 0, rotateX: 0 }}
-                    transition={{ duration: 1, delay: 0.5, type: "spring" }}
-                >
-                    <div className="home-preview-card">
-                        <div className="home-preview-header">
-                            <div className="home-preview-dots">
-                                <span></span><span></span><span></span>
+                    {/* Hero Visuals (Generated Image + Floating Preview) */}
+                    <motion.div 
+                        className="home-hero-visuals"
+                        initial={{ opacity: 0, scale: 0.9, x: 50 }}
+                        animate={{ opacity: 1, scale: 1, x: 0 }}
+                        transition={{ duration: 1, delay: 0.3, type: "spring" }}
+                    >
+                        <img 
+                            src="/hero-illustration.png" 
+                            alt="Premium 3D Abstract Illustration" 
+                            className="home-hero-image"
+                        />
+                        
+                        <motion.div 
+                            className="home-preview-card"
+                            initial={{ opacity: 0, y: 50 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ duration: 0.8, delay: 0.8 }}
+                        >
+                            <div className="home-preview-header">
+                                <div className="home-preview-dots">
+                                    <span></span><span></span><span></span>
+                                </div>
+                                <div className="home-preview-url">reviewflow.ai/your-business</div>
                             </div>
-                            <div className="home-preview-url">reviewflow.ai/your-business</div>
-                        </div>
-                        <div className="home-preview-content">
-                            <div className="home-preview-stars">
-                                {[1, 2, 3, 4, 5].map(i => <Star key={i} size={24} fill="currentColor" />)}
+                            <div className="home-preview-content">
+                                <div className="home-preview-stars">
+                                    {[1, 2, 3, 4, 5].map(i => <Star key={i} size={20} fill="currentColor" />)}
+                                </div>
+                                <div style={{ height: '10px', width: '60%', background: '#e2e8f0', borderRadius: '4px', marginTop: '0.5rem' }}></div>
+                                <div style={{ height: '8px', width: '80%', background: '#f1f5f9', borderRadius: '4px' }}></div>
+                                <div style={{ height: '8px', width: '40%', background: '#f1f5f9', borderRadius: '4px' }}></div>
+                                
+                                <div style={{ marginTop: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem', color: '#a855f7', fontSize: '0.875rem', fontWeight: 700 }}>
+                                    <Sparkles size={16} /> AI Response Generated
+                                </div>
                             </div>
-                            <div style={{ height: '12px', width: '60%', background: '#3f3f46', borderRadius: '4px', marginTop: '1rem' }}></div>
-                            <div style={{ height: '8px', width: '80%', background: '#27272a', borderRadius: '4px' }}></div>
-                            <div style={{ height: '8px', width: '40%', background: '#27272a', borderRadius: '4px' }}></div>
-                            
-                            <div style={{ marginTop: '2rem', display: 'flex', alignItems: 'center', gap: '0.5rem', color: '#a855f7', fontSize: '0.875rem', fontWeight: 600 }}>
-                                <Sparkles size={16} /> AI Response Generated
-                            </div>
-                        </div>
-                    </div>
-                </motion.div>
+                        </motion.div>
+                    </motion.div>
+                </div>
             </section>
 
             {/* Stats Section */}
